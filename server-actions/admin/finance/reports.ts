@@ -14,13 +14,8 @@ export async function getEventRevenue(eventId: string, dateRange?: { start: stri
 
 export async function getPlatformKPIs(dateRange?: { start: string; end: string }) {
   // Super admin has access to all admin functions
-  // requireRole already allows super_admin, but we'll be explicit
-  try {
-    await requireSuperAdmin()
-  } catch {
-    // If not super_admin, require accounting role
-    await requireRole(ROLES.ACCOUNTING)
-  }
+  // requireRole already allows super_admin, so we can use it directly
+  await requireRole(ROLES.ACCOUNTING)
 
   const supabase = await createServiceRoleClient()
 
