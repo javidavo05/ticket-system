@@ -205,3 +205,83 @@
 {"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/.well-known/appspecific/com.chrome.devtools.json"},"timestamp":1765908809475,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
 {"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765908809476,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
 {"location":"app/layout.tsx:17","message":"RootLayout rendering","data":{},"timestamp":1765908809490,"sessionId":"debug-session","runId":"run2","hypothesisId":"C"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/admin/dashboard"},"timestamp":1765909013328,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:64","message":"Admin route check","data":{"pathname":"/admin/dashboard"},"timestamp":1765909013331,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:87","message":"User check result","data":{"hasUser":true,"userId":"48d6e706-5539-46cb-8a95-f162246438fd"},"timestamp":1765909013679,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:112","message":"Middleware allowing access","data":{"userId":"48d6e706-5539-46cb-8a95-f162246438fd","isAdmin":true},"timestamp":1765909013829,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909013831,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"app/layout.tsx:17","message":"RootLayout rendering","data":{},"timestamp":1765909015376,"sessionId":"debug-session","runId":"run2","hypothesisId":"C"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/.well-known/appspecific/com.chrome.devtools.json"},"timestamp":1765909015506,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909015506,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"app/layout.tsx:17","message":"RootLayout rendering","data":{},"timestamp":1765909015516,"sessionId":"debug-session","runId":"run2","hypothesisId":"C"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/login"},"timestamp":1765909017252,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909017255,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"app/layout.tsx:17","message":"RootLayout rendering","data":{},"timestamp":1765909017629,"sessionId":"debug-session","runId":"run2","hypothesisId":"C"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/.well-known/appspecific/com.chrome.devtools.json"},"timestamp":1765909017697,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909017698,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"app/layout.tsx:17","message":"RootLayout rendering","data":{},"timestamp":1765909017712,"sessionId":"debug-session","runId":"run2","hypothesisId":"C"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/admin/dashboard"},"timestamp":1765909029568,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:64","message":"Admin route check","data":{"pathname":"/admin/dashboard"},"timestamp":1765909029570,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:87","message":"User check result","data":{"hasUser":true,"userId":"48d6e706-5539-46cb-8a95-f162246438fd"},"timestamp":1765909029872,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:112","message":"Middleware allowing access","data":{"userId":"48d6e706-5539-46cb-8a95-f162246438fd","isAdmin":true},"timestamp":1765909030025,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909030025,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"app/layout.tsx:17","message":"RootLayout rendering","data":{},"timestamp":1765909030041,"sessionId":"debug-session","runId":"run2","hypothesisId":"C"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/.well-known/appspecific/com.chrome.devtools.json"},"timestamp":1765909030101,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909030101,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"app/layout.tsx:17","message":"RootLayout rendering","data":{},"timestamp":1765909030113,"sessionId":"debug-session","runId":"run2","hypothesisId":"C"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/admin/dashboard"},"timestamp":1765909068389,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:64","message":"Admin route check","data":{"pathname":"/admin/dashboard"},"timestamp":1765909068390,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:87","message":"User check result","data":{"hasUser":true,"userId":"48d6e706-5539-46cb-8a95-f162246438fd"},"timestamp":1765909068611,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:112","message":"Middleware allowing access","data":{"userId":"48d6e706-5539-46cb-8a95-f162246438fd","isAdmin":true},"timestamp":1765909068773,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909068773,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"app/layout.tsx:17","message":"RootLayout rendering","data":{},"timestamp":1765909068780,"sessionId":"debug-session","runId":"run2","hypothesisId":"C"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/admin/dashboard"},"timestamp":1765909068792,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:64","message":"Admin route check","data":{"pathname":"/admin/dashboard"},"timestamp":1765909068793,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:87","message":"User check result","data":{"hasUser":true,"userId":"48d6e706-5539-46cb-8a95-f162246438fd"},"timestamp":1765909068905,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:112","message":"Middleware allowing access","data":{"userId":"48d6e706-5539-46cb-8a95-f162246438fd","isAdmin":true},"timestamp":1765909069017,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909069017,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"app/layout.tsx:17","message":"RootLayout rendering","data":{},"timestamp":1765909069021,"sessionId":"debug-session","runId":"run2","hypothesisId":"C"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/.well-known/appspecific/com.chrome.devtools.json"},"timestamp":1765909069059,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909069061,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"app/layout.tsx:17","message":"RootLayout rendering","data":{},"timestamp":1765909069081,"sessionId":"debug-session","runId":"run2","hypothesisId":"C"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/admin/dashboard"},"timestamp":1765909084219,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:64","message":"Admin route check","data":{"pathname":"/admin/dashboard"},"timestamp":1765909084220,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:87","message":"User check result","data":{"hasUser":true,"userId":"48d6e706-5539-46cb-8a95-f162246438fd"},"timestamp":1765909084435,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:112","message":"Middleware allowing access","data":{"userId":"48d6e706-5539-46cb-8a95-f162246438fd","isAdmin":true},"timestamp":1765909084538,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909084539,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"app/layout.tsx:17","message":"RootLayout rendering","data":{},"timestamp":1765909084543,"sessionId":"debug-session","runId":"run2","hypothesisId":"C"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/admin/dashboard"},"timestamp":1765909084552,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:64","message":"Admin route check","data":{"pathname":"/admin/dashboard"},"timestamp":1765909084552,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:87","message":"User check result","data":{"hasUser":true,"userId":"48d6e706-5539-46cb-8a95-f162246438fd"},"timestamp":1765909084665,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:112","message":"Middleware allowing access","data":{"userId":"48d6e706-5539-46cb-8a95-f162246438fd","isAdmin":true},"timestamp":1765909084766,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909084766,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"app/layout.tsx:17","message":"RootLayout rendering","data":{},"timestamp":1765909084770,"sessionId":"debug-session","runId":"run2","hypothesisId":"C"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/.well-known/appspecific/com.chrome.devtools.json"},"timestamp":1765909084801,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909084803,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"app/layout.tsx:17","message":"RootLayout rendering","data":{},"timestamp":1765909084816,"sessionId":"debug-session","runId":"run2","hypothesisId":"C"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/login"},"timestamp":1765909139300,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909139307,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"app/layout.tsx:17","message":"RootLayout rendering","data":{},"timestamp":1765909141202,"sessionId":"debug-session","runId":"run2","hypothesisId":"C"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/.well-known/appspecific/com.chrome.devtools.json"},"timestamp":1765909141319,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909141323,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"app/layout.tsx:17","message":"RootLayout rendering","data":{},"timestamp":1765909141449,"sessionId":"debug-session","runId":"run2","hypothesisId":"C"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/admin/dashboard"},"timestamp":1765909194171,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:64","message":"Admin route check","data":{"pathname":"/admin/dashboard"},"timestamp":1765909194173,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:87","message":"User check result","data":{"hasUser":true,"userId":"48d6e706-5539-46cb-8a95-f162246438fd"},"timestamp":1765909194417,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:112","message":"Middleware allowing access","data":{"userId":"48d6e706-5539-46cb-8a95-f162246438fd","isAdmin":true},"timestamp":1765909194537,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909194538,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"app/layout.tsx:17","message":"RootLayout rendering","data":{},"timestamp":1765909194551,"sessionId":"debug-session","runId":"run2","hypothesisId":"C"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/.well-known/appspecific/com.chrome.devtools.json"},"timestamp":1765909194605,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909194606,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"app/layout.tsx:17","message":"RootLayout rendering","data":{},"timestamp":1765909194616,"sessionId":"debug-session","runId":"run2","hypothesisId":"C"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/login"},"timestamp":1765909403149,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909403151,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/admin/dashboard"},"timestamp":1765909403670,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:64","message":"Admin route check","data":{"pathname":"/admin/dashboard"},"timestamp":1765909403671,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/.well-known/appspecific/com.chrome.devtools.json"},"timestamp":1765909403850,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909403851,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:87","message":"User check result","data":{"hasUser":true,"userId":"48d6e706-5539-46cb-8a95-f162246438fd"},"timestamp":1765909404166,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"lib/auth/middleware.ts:112","message":"Middleware allowing access","data":{"userId":"48d6e706-5539-46cb-8a95-f162246438fd","isAdmin":true},"timestamp":1765909404421,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909404422,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/.well-known/appspecific/com.chrome.devtools.json"},"timestamp":1765909496964,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765909496973,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
