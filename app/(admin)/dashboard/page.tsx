@@ -1,7 +1,21 @@
 import { getPlatformKPIs } from '@/server-actions/admin/finance/reports'
 
 export default async function AdminDashboard() {
-  const kpis = await getPlatformKPIs()
+  let kpis
+  
+  try {
+    kpis = await getPlatformKPIs()
+  } catch (error: any) {
+    console.error('Error loading KPIs:', error)
+    // Return default values if there's an error
+    kpis = {
+      totalRevenue: 0,
+      totalEvents: 0,
+      totalTickets: 0,
+      ticketsSold: 0,
+      conversionRate: 0,
+    }
+  }
 
   return (
     <div>
