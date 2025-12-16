@@ -21,14 +21,30 @@ export async function authMiddleware(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          return request.cookies.getAll()
+          const cookies = request.cookies.getAll()
+          // Log para debugging
+          if (pathname.startsWith('/admin') || pathname.startsWith('/dashboard')) {
+            console.log('🔵 [MIDDLEWARE] getAll() llamado, cookies encontradas:', cookies.length)
+          }
+          return cookies
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
+          // Log para debugging
+          if (pathname.startsWith('/admin') || pathname.startsWith('/dashboard')) {
+            console.log('🔵 [MIDDLEWARE] setAll() llamado con', cookiesToSet.length, 'cookies')
+          }
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value)
+            // Asegurar que las opciones de las cookies sean correctas
+            const cookieOptions = {
+              ...options,
+              path: options?.path || '/',
+              sameSite: options?.sameSite || 'lax',
+              httpOnly: options?.httpOnly ?? false,
+            }
+            supabaseResponse = NextResponse.next({ request })
+            supabaseResponse.cookies.set(name, value, cookieOptions)
+          })
         },
       },
     }
