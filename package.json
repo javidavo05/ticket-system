@@ -13,6 +13,7 @@
     "db:seed": "tsx scripts/seed.ts",
     "setup:env": "node scripts/setup-env.js",
     "create:superadmin": "tsx scripts/create-superadmin.ts",
+    "check:user": "tsx scripts/check-user-roles.ts",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

@@ -17,43 +17,80 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    console.log('🔵 [LOGIN] Iniciando proceso de login...')
     setError(null)
     setLoading(true)
 
     try {
+      console.log('🔵 [LOGIN] Creando cliente de Supabase...')
       const supabase = createClient()
+      console.log('✅ [LOGIN] Cliente de Supabase creado')
       
+      console.log('🔵 [LOGIN] Intentando iniciar sesión con:', { email, passwordLength: password.length })
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
+      console.log('🔵 [LOGIN] Respuesta de signInWithPassword:', { 
+        hasData: !!data, 
+        hasUser: !!data?.user,
+        hasError: !!signInError,
+        errorMessage: signInError?.message 
+      })
+
       if (signInError) {
+        console.error('❌ [LOGIN] Error al iniciar sesión:', signInError)
         setError(signInError.message)
         setLoading(false)
         return
       }
 
-      if (data.user) {
-        // Verificar que la sesión se estableció correctamente
-        const { data: { session } } = await supabase.auth.getSession()
-        
-        if (!session) {
-          setError('Error: La sesión no se estableció correctamente')
-          setLoading(false)
-          return
-        }
-
-        // Esperar un momento para que las cookies se establezcan
-        await new Promise(resolve => setTimeout(resolve, 200))
-        
-        // Usar window.location para hacer un refresh completo y asegurar que las cookies se lean
-        window.location.href = redirectTo
-      } else {
+      if (!data || !data.user) {
+        console.error('❌ [LOGIN] No se recibió data o user')
         setError('Error: No se pudo obtener información del usuario')
         setLoading(false)
+        return
       }
+
+      console.log('✅ [LOGIN] Usuario autenticado:', { userId: data.user.id, email: data.user.email })
+
+      // Verificar que la sesión se estableció correctamente
+      console.log('🔵 [LOGIN] Verificando sesión...')
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+      
+      console.log('🔵 [LOGIN] Resultado de getSession:', { 
+        hasSession: !!sessionData?.session,
+        hasError: !!sessionError,
+        errorMessage: sessionError?.message 
+      })
+      
+      if (sessionError) {
+        console.error('❌ [LOGIN] Error al obtener sesión:', sessionError)
+        setError('Error: No se pudo verificar la sesión')
+        setLoading(false)
+        return
+      }
+
+      if (!sessionData?.session) {
+        console.error('❌ [LOGIN] La sesión no se estableció correctamente')
+        setError('Error: La sesión no se estableció correctamente')
+        setLoading(false)
+        return
+      }
+
+      console.log('✅ [LOGIN] Sesión verificada correctamente')
+      console.log('🔵 [LOGIN] Redirigiendo a:', redirectTo)
+
+      // Esperar un momento para que las cookies se establezcan
+      await new Promise(resolve => setTimeout(resolve, 200))
+      
+      console.log('🔵 [LOGIN] Ejecutando redirección...')
+      // Usar window.location para hacer un refresh completo y asegurar que las cookies se lean
+      window.location.href = redirectTo
     } catch (err: any) {
+      console.error('❌ [LOGIN] Error inesperado:', err)
+      console.error('❌ [LOGIN] Stack:', err.stack)
       setError(err.message || 'Error al iniciar sesión')
       setLoading(false)
     }
