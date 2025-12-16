@@ -7,12 +7,13 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/(admin)/layout.tsx:10',message:'AdminLayout entry',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
-  console.log('🔵 [ADMIN LAYOUT] Verificando acceso...')
-  
-  const user = await getCurrentUser()
+  try {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/(admin)/layout.tsx:11',message:'AdminLayout entry',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    console.log('🔵 [ADMIN LAYOUT] Verificando acceso...')
+    
+    const user = await getCurrentUser()
   // #region agent log
   fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/(admin)/layout.tsx:15',message:'User obtained',data:{hasUser:!!user,userId:user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
   // #endregion
@@ -46,17 +47,24 @@ export default async function AdminLayout({
   // #endregion
   console.log('✅ [ADMIN LAYOUT] Acceso permitido')
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        </div>
-      </nav>
-      <main className="container mx-auto px-4 py-8">
-        {children}
-      </main>
-    </div>
-  )
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <nav className="bg-white border-b">
+          <div className="container mx-auto px-4 py-4">
+            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+          </div>
+        </nav>
+        <main className="container mx-auto px-4 py-8">
+          {children}
+        </main>
+      </div>
+    )
+  } catch (error: any) {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/(admin)/layout.tsx:62',message:'Layout error caught',data:{errorMessage:error?.message,errorName:error?.name,errorStack:error?.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    console.error('❌ [ADMIN LAYOUT] Error:', error)
+    throw error
+  }
 }
 
