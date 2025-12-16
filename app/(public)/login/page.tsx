@@ -35,9 +35,23 @@ export default function LoginPage() {
       }
 
       if (data.user) {
-        // Redirigir a la página solicitada o al dashboard
-        router.push(redirectTo)
-        router.refresh()
+        // Verificar que la sesión se estableció correctamente
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (!session) {
+          setError('Error: La sesión no se estableció correctamente')
+          setLoading(false)
+          return
+        }
+
+        // Esperar un momento para que las cookies se establezcan
+        await new Promise(resolve => setTimeout(resolve, 200))
+        
+        // Usar window.location para hacer un refresh completo y asegurar que las cookies se lean
+        window.location.href = redirectTo
+      } else {
+        setError('Error: No se pudo obtener información del usuario')
+        setLoading(false)
       }
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión')
