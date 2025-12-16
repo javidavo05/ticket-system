@@ -1,6 +1,6 @@
 'use server'
 
-import { requireRole } from '@/lib/auth/permissions'
+import { requireSuperAdmin, requireRole } from '@/lib/auth/permissions'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { getEventAnalytics } from '@/lib/services/events/analytics'
 import { ROLES } from '@/lib/utils/constants'
@@ -13,7 +13,10 @@ export async function getEventRevenue(eventId: string, dateRange?: { start: stri
 }
 
 export async function getPlatformKPIs(dateRange?: { start: string; end: string }) {
-  await requireRole(ROLES.ACCOUNTING)
+  // Allow super_admin or accounting role
+  await requireSuperAdmin().catch(async () => {
+    await requireRole(ROLES.ACCOUNTING)
+  })
 
   const supabase = await createServiceRoleClient()
 
