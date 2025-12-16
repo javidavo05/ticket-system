@@ -7,45 +7,29 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
+  console.log('🔵 [ADMIN LAYOUT] ==========================================')
+  console.log('🔵 [ADMIN LAYOUT] AdminLayout entry - START')
   try {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/(admin)/layout.tsx:11',message:'AdminLayout entry',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     console.log('🔵 [ADMIN LAYOUT] Verificando acceso...')
     
     const user = await getCurrentUser()
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/(admin)/layout.tsx:15',message:'User obtained',data:{hasUser:!!user,userId:user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
-  console.log('🔵 [ADMIN LAYOUT] Usuario obtenido:', user ? { id: user.id, email: user.email } : 'null')
+    console.log('🔵 [ADMIN LAYOUT] Usuario obtenido:', user ? { id: user.id, email: user.email } : 'null')
 
-  if (!user) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/(admin)/layout.tsx:19',message:'Redirecting to login - no user',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    console.log('❌ [ADMIN LAYOUT] No hay usuario, redirigiendo a login')
-    redirect('/login')
-  }
+    if (!user) {
+      console.log('❌ [ADMIN LAYOUT] No hay usuario, redirigiendo a login')
+      redirect('/login')
+    }
 
-  console.log('🔵 [ADMIN LAYOUT] Verificando rol super_admin para usuario:', user.id)
-  const isAdmin = await isSuperAdmin(user.id)
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/(admin)/layout.tsx:25',message:'Admin check result',data:{isAdmin,userId:user.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
-  console.log('🔵 [ADMIN LAYOUT] Es super_admin?', isAdmin)
+    console.log('🔵 [ADMIN LAYOUT] Verificando rol super_admin para usuario:', user.id)
+    const isAdmin = await isSuperAdmin(user.id)
+    console.log('🔵 [ADMIN LAYOUT] Es super_admin?', isAdmin)
 
-  if (!isAdmin) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/(admin)/layout.tsx:29',message:'Redirecting to home - not admin',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    console.log('❌ [ADMIN LAYOUT] Usuario no es super_admin, redirigiendo a home')
-    redirect('/')
-  }
+    if (!isAdmin) {
+      console.log('❌ [ADMIN LAYOUT] Usuario no es super_admin, redirigiendo a home')
+      redirect('/')
+    }
 
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/(admin)/layout.tsx:33',message:'Layout rendering children',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
-  console.log('✅ [ADMIN LAYOUT] Acceso permitido')
+    console.log('✅ [ADMIN LAYOUT] Acceso permitido, renderizando layout')
 
     return (
       <div className="min-h-screen bg-gray-50">
@@ -60,10 +44,11 @@ export default async function AdminLayout({
       </div>
     )
   } catch (error: any) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/(admin)/layout.tsx:62',message:'Layout error caught',data:{errorMessage:error?.message,errorName:error?.name,errorStack:error?.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
-    console.error('❌ [ADMIN LAYOUT] Error:', error)
+    console.error('❌ [ADMIN LAYOUT] ==========================================')
+    console.error('❌ [ADMIN LAYOUT] Error capturado:', error)
+    console.error('❌ [ADMIN LAYOUT] Error message:', error?.message)
+    console.error('❌ [ADMIN LAYOUT] Error stack:', error?.stack)
+    console.error('❌ [ADMIN LAYOUT] ==========================================')
     throw error
   }
 }
