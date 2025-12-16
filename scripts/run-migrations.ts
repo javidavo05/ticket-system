@@ -14,12 +14,11 @@ async function runMigrations() {
     throw new Error('DIRECT_URL or SUPABASE_DB_URL not found in environment')
   }
 
-  // Decode URL-encoded password and remove quotes if present
+  // Remove quotes if present
   directUrl = directUrl.replace(/^["']|["']$/g, '')
-  directUrl = decodeURIComponent(directUrl)
   
-  // Remove brackets from password if present
-  directUrl = directUrl.replace(/\[([^\]]+)\]/g, '$1')
+  // Don't decode URL - postgres library handles URL-encoded passwords automatically
+  // The password should be URL-encoded in the .env file (e.g., @ becomes %40)
 
   console.log('🔌 Connecting to database...')
   const sql = postgres(directUrl, {
