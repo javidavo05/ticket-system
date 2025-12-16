@@ -25,6 +25,16 @@ export async function authMiddleware(request: NextRequest) {
           // Log para debugging
           if (pathname.startsWith('/admin') || pathname.startsWith('/dashboard')) {
             console.log('🔵 [MIDDLEWARE] getAll() llamado, cookies encontradas:', cookies.length)
+            // Verificar si la cookie de auth tiene el formato correcto
+            const authCookie = cookies.find(c => c.name.includes('auth-token'))
+            if (authCookie && authCookie.value) {
+              try {
+                const parsed = JSON.parse(authCookie.value)
+                console.log('🔵 [MIDDLEWARE] Cookie parseada correctamente, tiene access_token:', !!parsed.access_token)
+              } catch (e) {
+                console.log('❌ [MIDDLEWARE] Error parseando cookie JSON:', e)
+              }
+            }
           }
           return cookies
         },
