@@ -35,7 +35,11 @@ export async function authMiddleware(request: NextRequest) {
   )
 
   // Refresh session
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  
+  if (userError) {
+    console.log('❌ [MIDDLEWARE] Error al obtener usuario:', userError.message)
+  }
 
   // Admin routes require authentication
   if (pathname.startsWith('/admin') || pathname.startsWith('/dashboard')) {
