@@ -1,9 +1,29 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+
+// Función helper para guardar logs
+function logToStorage(message: string, data?: any) {
+  const timestamp = new Date().toISOString()
+  const logEntry = `[${timestamp}] ${message}${data ? ' ' + JSON.stringify(data, null, 2) : ''}`
+  console.log(logEntry)
+  
+  // Guardar en localStorage
+  try {
+    const existingLogs = localStorage.getItem('login_logs') || '[]'
+    const logs = JSON.parse(existingLogs)
+    logs.push(logEntry)
+    // Mantener solo los últimos 50 logs
+    if (logs.length > 50) logs.shift()
+    localStorage.setItem('login_logs', JSON.stringify(logs))
+    localStorage.setItem('login_logs_last_update', timestamp)
+  } catch (e) {
+    console.error('Error guardando logs:', e)
+  }
+}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -12,27 +32,41 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [logs, setLogs] = useState<string[]>([])
+  const [showLogs, setShowLogs] = useState(false)
 
   const redirectTo = searchParams.get('redirect') || '/admin/dashboard'
 
+  // Cargar logs al montar el componente
+  useEffect(() => {
+    try {
+      const savedLogs = localStorage.getItem('login_logs')
+      if (savedLogs) {
+        setLogs(JSON.parse(savedLogs))
+      }
+    } catch (e) {
+      console.error('Error cargando logs:', e)
+    }
+  }, [])
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    console.log('🔵 [LOGIN] Iniciando proceso de login...')
+    logToStorage('🔵 [LOGIN] Iniciando proceso de login...')
     setError(null)
     setLoading(true)
 
     try {
-      console.log('🔵 [LOGIN] Creando cliente de Supabase...')
+      logToStorage('🔵 [LOGIN] Creando cliente de Supabase...')
       const supabase = createClient()
-      console.log('✅ [LOGIN] Cliente de Supabase creado')
+      logToStorage('✅ [LOGIN] Cliente de Supabase creado')
       
-      console.log('🔵 [LOGIN] Intentando iniciar sesión con:', { email, passwordLength: password.length })
+      logToStorage('🔵 [LOGIN] Intentando iniciar sesión', { email, passwordLength: password.length })
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      console.log('🔵 [LOGIN] Respuesta de signInWithPassword:', { 
+      logToStorage('🔵 [LOGIN] Respuesta de signInWithPassword', { 
         hasData: !!data, 
         hasUser: !!data?.user,
         hasError: !!signInError,
@@ -40,60 +74,77 @@ export default function LoginPage() {
       })
 
       if (signInError) {
-        console.error('❌ [LOGIN] Error al iniciar sesión:', signInError)
+        logToStorage('❌ [LOGIN] Error al iniciar sesión', signInError)
         setError(signInError.message)
         setLoading(false)
+        // Actualizar logs en la UI
+        const savedLogs = localStorage.getItem('login_logs')
+        if (savedLogs) setLogs(JSON.parse(savedLogs))
         return
       }
 
       if (!data || !data.user) {
-        console.error('❌ [LOGIN] No se recibió data o user')
+        logToStorage('❌ [LOGIN] No se recibió data o user')
         setError('Error: No se pudo obtener información del usuario')
         setLoading(false)
+        const savedLogs = localStorage.getItem('login_logs')
+        if (savedLogs) setLogs(JSON.parse(savedLogs))
         return
       }
 
-      console.log('✅ [LOGIN] Usuario autenticado:', { userId: data.user.id, email: data.user.email })
+      logToStorage('✅ [LOGIN] Usuario autenticado', { userId: data.user.id, email: data.user.email })
 
       // Verificar que la sesión se estableció correctamente
-      console.log('🔵 [LOGIN] Verificando sesión...')
+      logToStorage('🔵 [LOGIN] Verificando sesión...')
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
       
-      console.log('🔵 [LOGIN] Resultado de getSession:', { 
+      logToStorage('🔵 [LOGIN] Resultado de getSession', { 
         hasSession: !!sessionData?.session,
         hasError: !!sessionError,
         errorMessage: sessionError?.message 
       })
       
       if (sessionError) {
-        console.error('❌ [LOGIN] Error al obtener sesión:', sessionError)
+        logToStorage('❌ [LOGIN] Error al obtener sesión', sessionError)
         setError('Error: No se pudo verificar la sesión')
         setLoading(false)
+        const savedLogs = localStorage.getItem('login_logs')
+        if (savedLogs) setLogs(JSON.parse(savedLogs))
         return
       }
 
       if (!sessionData?.session) {
-        console.error('❌ [LOGIN] La sesión no se estableció correctamente')
+        logToStorage('❌ [LOGIN] La sesión no se estableció correctamente')
         setError('Error: La sesión no se estableció correctamente')
         setLoading(false)
+        const savedLogs = localStorage.getItem('login_logs')
+        if (savedLogs) setLogs(JSON.parse(savedLogs))
         return
       }
 
-      console.log('✅ [LOGIN] Sesión verificada correctamente')
-      console.log('🔵 [LOGIN] Redirigiendo a:', redirectTo)
+      logToStorage('✅ [LOGIN] Sesión verificada correctamente')
+      logToStorage('🔵 [LOGIN] Redirigiendo a', { redirectTo })
 
-      // Esperar un momento para que las cookies se establezcan
-      await new Promise(resolve => setTimeout(resolve, 200))
+      // Esperar más tiempo para que puedas ver los logs
+      logToStorage('⏳ [LOGIN] Esperando 3 segundos antes de redirigir...')
+      await new Promise(resolve => setTimeout(resolve, 3000))
       
-      console.log('🔵 [LOGIN] Ejecutando redirección...')
+      logToStorage('🔵 [LOGIN] Ejecutando redirección...')
       // Usar window.location para hacer un refresh completo y asegurar que las cookies se lean
       window.location.href = redirectTo
     } catch (err: any) {
-      console.error('❌ [LOGIN] Error inesperado:', err)
-      console.error('❌ [LOGIN] Stack:', err.stack)
+      logToStorage('❌ [LOGIN] Error inesperado', { message: err.message, stack: err.stack })
       setError(err.message || 'Error al iniciar sesión')
       setLoading(false)
+      const savedLogs = localStorage.getItem('login_logs')
+      if (savedLogs) setLogs(JSON.parse(savedLogs))
     }
+  }
+
+  const clearLogs = () => {
+    localStorage.removeItem('login_logs')
+    localStorage.removeItem('login_logs_last_update')
+    setLogs([])
   }
 
   return (
@@ -168,15 +219,48 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="text-center">
+          <div className="text-center space-y-2">
             <Link
               href="/"
               className="text-sm text-indigo-600 hover:text-indigo-500"
             >
               Volver al inicio
             </Link>
+            <div className="flex justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const savedLogs = localStorage.getItem('login_logs')
+                  if (savedLogs) setLogs(JSON.parse(savedLogs))
+                  setShowLogs(!showLogs)
+                }}
+                className="text-xs text-gray-500 hover:text-gray-700 underline"
+              >
+                {showLogs ? 'Ocultar' : 'Ver'} Logs de Debug
+              </button>
+              {logs.length > 0 && (
+                <button
+                  type="button"
+                  onClick={clearLogs}
+                  className="text-xs text-red-500 hover:text-red-700 underline"
+                >
+                  Limpiar Logs
+                </button>
+              )}
+            </div>
           </div>
         </form>
+
+        {showLogs && logs.length > 0 && (
+          <div className="mt-8 p-4 bg-gray-900 text-green-400 rounded-lg max-h-96 overflow-y-auto">
+            <div className="text-xs font-mono space-y-1">
+              <div className="text-white mb-2 font-bold">Logs de Debug (últimos {logs.length}):</div>
+              {logs.map((log, index) => (
+                <div key={index} className="text-xs">{log}</div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
