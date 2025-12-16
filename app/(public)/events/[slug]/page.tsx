@@ -26,37 +26,38 @@ export default async function EventPage({ params }: { params: { slug: string } }
       <div className="mt-8">
         <h2 className="text-2xl font-semibold mb-4">Ticket Types</h2>
         <div className="space-y-4">
-          {Array.isArray(event.ticket_types) ? event.ticket_types.map((ticketType: any) => {
-            const available = ticketType.quantity_available - ticketType.quantity_sold
-            return (
-              <div key={ticketType.id} className="p-4 border rounded-lg">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-xl font-semibold">{ticketType.name}</h3>
-                    {ticketType.description && (
-                      <p className="text-gray-600">{ticketType.description}</p>
-                    )}
-                    <p className="text-sm text-gray-500 mt-2">
-                      {available} tickets available
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold">${parseFloat(ticketType.price as string).toFixed(2)}</p>
-                    {available > 0 ? (
-                      <Link
-                        href={`/events/${params.slug}/checkout?ticketType=${ticketType.id}`}
-                        className="mt-2 inline-block bg-black text-white px-6 py-2 rounded hover:bg-gray-800"
-                      >
-                        Buy Tickets
-                      </Link>
-                    ) : (
-                      <p className="mt-2 text-red-600">Sold Out</p>
-                    )}
+          {event.ticket_types && Array.isArray(event.ticket_types) && event.ticket_types.length > 0 ? (
+            event.ticket_types.map((ticketType: any) => {
+              const available = ticketType.quantity_available - ticketType.quantity_sold
+              return (
+                <div key={ticketType.id} className="p-4 border rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-xl font-semibold">{ticketType.name}</h3>
+                      {ticketType.description && (
+                        <p className="text-gray-600">{ticketType.description}</p>
+                      )}
+                      <p className="text-sm text-gray-500 mt-2">
+                        {available} tickets available
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold">${parseFloat(ticketType.price as string).toFixed(2)}</p>
+                      {available > 0 ? (
+                        <Link
+                          href={`/events/${params.slug}/checkout?ticketType=${ticketType.id}`}
+                          className="mt-2 inline-block bg-black text-white px-6 py-2 rounded hover:bg-gray-800"
+                        >
+                          Buy Tickets
+                        </Link>
+                      ) : (
+                        <p className="mt-2 text-red-600">Sold Out</p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )
-          })
+              )
+            })
           ) : (
             <p className="text-gray-500">No ticket types available for this event.</p>
           )}
