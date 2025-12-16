@@ -19,6 +19,7 @@ A production-grade, security-first ticketing and cashless system built with Next
 - **Database**: Supabase PostgreSQL
 - **Auth**: Supabase Auth + Google OAuth
 - **ORM**: Drizzle ORM
+- **Email**: Brevo (formerly Sendinblue)
 - **Hosting**: Vercel (Phase 1)
 
 ## Getting Started
