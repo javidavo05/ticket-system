@@ -32,24 +32,18 @@ CREATE TABLE IF NOT EXISTS users (
   deleted_at TIMESTAMPTZ
 );
 
-CREATE TABLE IF NOT EXISTS user_roles (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
-  role user_role NOT NULL,
-  event_id UUID REFERENCES events(id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
-);
-
+-- Create themes first (no dependencies)
 CREATE TABLE IF NOT EXISTS themes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
-  event_id UUID REFERENCES events(id) ON DELETE CASCADE,
+  event_id UUID, -- Will add foreign key after events is created
   config JSONB NOT NULL,
   is_active BOOLEAN DEFAULT true NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
+-- Create events (depends on users and themes)
 CREATE TABLE IF NOT EXISTS events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug TEXT NOT NULL UNIQUE,
@@ -70,7 +64,19 @@ CREATE TABLE IF NOT EXISTS events (
   deleted_at TIMESTAMPTZ
 );
 
--- Add foreign key constraint for user_roles.event_id after events table is created
+-- Create user_roles (depends on users and events)
+CREATE TABLE IF NOT EXISTS user_roles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  role user_role NOT NULL,
+  event_id UUID, -- Will add foreign key after events is created
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- Add foreign key constraints after all tables are created
+ALTER TABLE themes ADD CONSTRAINT themes_event_id_fkey 
+  FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
+
 ALTER TABLE user_roles ADD CONSTRAINT user_roles_event_id_fkey 
   FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;
 
