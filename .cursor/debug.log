@@ -1,0 +1,12 @@
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/admin/dashboard"},"timestamp":1765908081384,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765908081885,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/admin/dashboard"},"timestamp":1765908082011,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765908082251,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/.well-known/appspecific/com.chrome.devtools.json"},"timestamp":1765908082311,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765908082314,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/admin/dashboard"},"timestamp":1765908098401,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765908098723,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/admin/dashboard"},"timestamp":1765908098741,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765908098947,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:5","message":"Middleware entry","data":{"pathname":"/.well-known/appspecific/com.chrome.devtools.json"},"timestamp":1765908098973,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"middleware.ts:9","message":"Middleware exit","data":{"status":200,"type":"default"},"timestamp":1765908098973,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}

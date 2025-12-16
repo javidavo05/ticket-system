@@ -13,9 +13,25 @@ export async function getEventRevenue(eventId: string, dateRange?: { start: stri
 }
 
 export async function getPlatformKPIs(dateRange?: { start: string; end: string }) {
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server-actions/admin/finance/reports.ts:15',message:'getPlatformKPIs entry',data:{hasDateRange:!!dateRange},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
   // Super admin has access to all admin functions
   // requireRole already allows super_admin, so we can use it directly
-  await requireRole(ROLES.ACCOUNTING)
+  try {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server-actions/admin/finance/reports.ts:20',message:'Calling requireRole',data:{role:ROLES.ACCOUNTING},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    await requireRole(ROLES.ACCOUNTING)
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server-actions/admin/finance/reports.ts:22',message:'requireRole passed',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+  } catch (error: any) {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server-actions/admin/finance/reports.ts:25',message:'requireRole failed',data:{errorMessage:error?.message,errorName:error?.name,errorStatus:error?.statusCode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    throw error
+  }
 
   const supabase = await createServiceRoleClient()
 

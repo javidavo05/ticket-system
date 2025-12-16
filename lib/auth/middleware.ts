@@ -62,6 +62,9 @@ export async function authMiddleware(request: NextRequest) {
 
   // Admin routes require authentication - verificar primero
   if (pathname.startsWith('/admin') || pathname.startsWith('/dashboard')) {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/auth/middleware.ts:64',message:'Admin route check',data:{pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     console.log('\n🔵 [MIDDLEWARE] ==========================================')
     console.log('🔵 [MIDDLEWARE] Verificando acceso a ruta admin:', pathname)
     console.log('🔵 [MIDDLEWARE] URL completa:', request.url)
@@ -112,8 +115,14 @@ export async function authMiddleware(request: NextRequest) {
     }
     
     console.log('🔵 [MIDDLEWARE] Usuario obtenido:', user ? { id: user.id, email: user.email } : 'null')
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/auth/middleware.ts:87',message:'User check result',data:{hasUser:!!user,userId:user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
 
     if (!user) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/auth/middleware.ts:90',message:'Middleware redirecting to login',data:{pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
       console.log('❌ [MIDDLEWARE] No hay usuario, redirigiendo a login')
       const url = request.nextUrl.clone()
       url.pathname = '/login'
@@ -134,6 +143,9 @@ export async function authMiddleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/', request.url))
     }
 
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/auth/middleware.ts:112',message:'Middleware allowing access',data:{userId:user.id,isAdmin:adminCheck},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     console.log('✅ [MIDDLEWARE] Usuario autenticado y es super_admin, permitiendo acceso')
     console.log('🔵 [MIDDLEWARE] ==========================================\n')
     return supabaseResponse
