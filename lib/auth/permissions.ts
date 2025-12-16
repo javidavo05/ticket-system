@@ -49,8 +49,19 @@ export async function requireEventAdmin(eventId: string) {
 }
 
 export async function getCurrentUser() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error } = await supabase.auth.getUser()
+    
+    if (error) {
+      console.log('❌ [getCurrentUser] Error al obtener usuario:', error.message)
+      return null
+    }
+    
+    return user
+  } catch (err: any) {
+    console.error('❌ [getCurrentUser] Excepción:', err.message)
+    return null
+  }
 }
 
