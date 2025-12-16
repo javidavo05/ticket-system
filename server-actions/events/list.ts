@@ -16,7 +16,22 @@ export async function getEvents(
   page: number = 1,
   pageSize: number = 20
 ) {
-  const supabase = await createServiceRoleClient()
+  let supabase
+  try {
+    supabase = await createServiceRoleClient()
+  } catch (error: any) {
+    // If service role key is not configured, return empty results
+    console.warn('Service role key not configured, returning empty events list')
+    return {
+      events: [],
+      pagination: {
+        page,
+        pageSize,
+        total: 0,
+        totalPages: 0,
+      },
+    }
+  }
 
   let query = supabase
     .from('events')
@@ -101,7 +116,13 @@ export async function getEvents(
 }
 
 export async function getEventBySlug(slug: string) {
-  const supabase = await createServiceRoleClient()
+  let supabase
+  try {
+    supabase = await createServiceRoleClient()
+  } catch (error: any) {
+    console.warn('Service role key not configured')
+    return null
+  }
 
   const { data: event, error } = await supabase
     .from('events')

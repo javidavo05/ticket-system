@@ -41,11 +41,22 @@ export async function createClient() {
 }
 
 export async function createServiceRoleClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || supabaseUrl === 'your_supabase_project_url' || !supabaseUrl.startsWith('http')) {
+    throw new Error('NEXT_PUBLIC_SUPABASE_URL no está configurado. Agrega tu URL de Supabase en el archivo .env')
+  }
+
+  if (!serviceRoleKey || serviceRoleKey === 'your_supabase_service_role_key') {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY no está configurado. Agrega tu service_role key en el archivo .env')
+  }
+
   const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
   
   return createSupabaseClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    supabaseUrl,
+    serviceRoleKey,
     {
       auth: {
         autoRefreshToken: false,

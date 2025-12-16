@@ -56,7 +56,10 @@ export default async function EventPage({ params }: { params: { slug: string } }
                 </div>
               </div>
             )
-          }) : null}
+          })
+          ) : (
+            <p className="text-gray-500">No ticket types available for this event.</p>
+          )}
         </div>
       </div>
     </div>
