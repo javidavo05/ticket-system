@@ -123,11 +123,16 @@ export default function LoginPage() {
       }
 
       logToStorage('✅ [LOGIN] Sesión verificada correctamente')
+      
+      // Verificar cookies antes de redirigir
+      const cookies = document.cookie
+      logToStorage('🔵 [LOGIN] Cookies del navegador:', { cookies: cookies.split(';').map(c => c.trim().split('=')[0]) })
+      
       logToStorage('🔵 [LOGIN] Redirigiendo a', { redirectTo })
 
-      // Esperar más tiempo para que puedas ver los logs
-      logToStorage('⏳ [LOGIN] Esperando 3 segundos antes de redirigir...')
-      await new Promise(resolve => setTimeout(resolve, 3000))
+      // Esperar un momento para que las cookies se establezcan completamente
+      logToStorage('⏳ [LOGIN] Esperando 1 segundo antes de redirigir...')
+      await new Promise(resolve => setTimeout(resolve, 1000))
       
       logToStorage('🔵 [LOGIN] Ejecutando redirección...')
       // Usar window.location para hacer un refresh completo y asegurar que las cookies se lean
