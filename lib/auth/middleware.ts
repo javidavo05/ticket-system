@@ -34,33 +34,13 @@ export async function authMiddleware(request: NextRequest) {
     }
   )
 
-  // Refresh session - intentar obtener sesión primero
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-  
-  if (sessionError) {
-    console.log('❌ [MIDDLEWARE] Error al obtener sesión:', sessionError.message)
-  }
-  
-  console.log('🔵 [MIDDLEWARE] Sesión obtenida:', session ? 'Sí' : 'No')
-  if (session) {
-    console.log('🔵 [MIDDLEWARE] Sesión válida, expira en:', new Date(session.expires_at! * 1000).toISOString())
-  }
-  
-  // Ahora obtener el usuario
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
-  
-  if (userError) {
-    console.log('❌ [MIDDLEWARE] Error al obtener usuario:', userError.message)
-    console.log('❌ [MIDDLEWARE] Error code:', userError.status)
-  }
-
-  // Admin routes require authentication
+  // Admin routes require authentication - verificar primero
   if (pathname.startsWith('/admin') || pathname.startsWith('/dashboard')) {
     console.log('\n🔵 [MIDDLEWARE] ==========================================')
     console.log('🔵 [MIDDLEWARE] Verificando acceso a ruta admin:', pathname)
     console.log('🔵 [MIDDLEWARE] URL completa:', request.url)
     
-    // Verificar cookies disponibles
+    // Verificar cookies disponibles ANTES de intentar obtener la sesión
     const cookies = request.cookies.getAll()
     const cookieNames = cookies.map(c => c.name)
     console.log('🔵 [MIDDLEWARE] Total cookies:', cookies.length)
@@ -71,7 +51,6 @@ export async function authMiddleware(request: NextRequest) {
     console.log('🔵 [MIDDLEWARE] Cookie de auth encontrada:', authCookie ? 'Sí' : 'No')
     if (authCookie) {
       console.log('🔵 [MIDDLEWARE] Cookie de auth tiene valor:', authCookie.value ? 'Sí (longitud: ' + authCookie.value.length + ')' : 'No')
-      // Mostrar los primeros 50 caracteres del valor para debugging (sin exponer el token completo)
       if (authCookie.value) {
         console.log('🔵 [MIDDLEWARE] Primeros caracteres del token:', authCookie.value.substring(0, 50) + '...')
       }
@@ -83,6 +62,28 @@ export async function authMiddleware(request: NextRequest) {
     supabaseCookies.forEach(c => {
       console.log('  -', c.name, ':', c.value ? `Valor presente (${c.value.length} chars)` : 'Sin valor')
     })
+    
+    // Intentar obtener sesión primero
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    
+    if (sessionError) {
+      console.log('❌ [MIDDLEWARE] Error al obtener sesión:', sessionError.message)
+      console.log('❌ [MIDDLEWARE] Error code:', sessionError.status)
+    }
+    
+    console.log('🔵 [MIDDLEWARE] Sesión obtenida:', session ? 'Sí' : 'No')
+    if (session) {
+      console.log('🔵 [MIDDLEWARE] Sesión válida, expira en:', new Date(session.expires_at! * 1000).toISOString())
+      console.log('🔵 [MIDDLEWARE] Usuario de la sesión:', session.user?.id)
+    }
+    
+    // Ahora obtener el usuario (debería usar la sesión si está disponible)
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    
+    if (userError) {
+      console.log('❌ [MIDDLEWARE] Error al obtener usuario:', userError.message)
+      console.log('❌ [MIDDLEWARE] Error code:', userError.status)
+    }
     
     console.log('🔵 [MIDDLEWARE] Usuario obtenido:', user ? { id: user.id, email: user.email } : 'null')
 
