@@ -114,8 +114,8 @@ export async function checkPaymentExpiration(paymentId: string): Promise<{
         action: 'payment_expired_tickets_reverted',
         resourceType: 'payment',
         resourceId: paymentId,
-        organizationId: paymentData.organization_id || undefined,
         metadata: {
+          organizationId: paymentData.organization_id || undefined,
           ticketCount: ticketsData.length,
           ticketTypeIds: ticketTypeIds,
         },
@@ -182,8 +182,8 @@ export async function extendPaymentExpiration(
       action: 'payment_expiration_extended',
       resourceType: 'payment',
       resourceId: paymentId,
-      organizationId: paymentData.organization_id || undefined,
       metadata: {
+        organizationId: paymentData.organization_id || undefined,
         oldExpiration: paymentData.expires_at,
         newExpiration: newExpirationDate.toISOString(),
       },
