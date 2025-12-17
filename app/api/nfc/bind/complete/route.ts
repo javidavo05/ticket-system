@@ -36,18 +36,20 @@ export async function POST(request: NextRequest) {
       used_at: string | null
     }
 
-    const { data: bindingToken, error: tokenError } = await supabase
+    const { data: bindingTokenData, error: tokenError } = await supabase
       .from('binding_tokens')
       .select('id, user_id, expires_at, used_at')
       .eq('token', validated.token)
-      .single() as { data: BindingToken | null; error: any }
+      .single()
 
-    if (tokenError || !bindingToken) {
+    if (tokenError || !bindingTokenData) {
       return NextResponse.json(
         { error: 'Invalid or expired binding token' },
         { status: 400 }
       )
     }
+
+    const bindingToken = bindingTokenData as BindingToken
 
     // Check if token is expired
     const expiresAt = new Date(bindingToken.expires_at)
