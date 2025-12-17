@@ -58,6 +58,7 @@ export async function getPlatformKPIs(dateRange?: { start: string; end: string }
   }
 
   const { count: totalActiveEvents } = await eventsQuery
+  const activeEventsCount = totalActiveEvents || 0
 
   // Tickets sold
   let ticketsQuery = supabase
@@ -70,6 +71,7 @@ export async function getPlatformKPIs(dateRange?: { start: string; end: string }
   }
 
   const { count: totalTicketsSold } = await ticketsQuery
+  const ticketsSoldCount = totalTicketsSold || 0
 
   // Total revenue
   let paymentsQuery = supabase
@@ -98,6 +100,7 @@ export async function getPlatformKPIs(dateRange?: { start: string; end: string }
   }
 
   const { count: activeUsers } = await usersQuery
+  const activeUsersCount = activeUsers || 0
 
   // Calculate growth rates (compare with previous period)
   let previousPeriod: { start: string; end: string } | undefined
@@ -114,24 +117,24 @@ export async function getPlatformKPIs(dateRange?: { start: string; end: string }
 
   const growthRate = {
     events: previousKPIs && previousKPIs.totalActiveEvents && previousKPIs.totalActiveEvents > 0
-      ? ((totalActiveEvents - (previousKPIs.totalActiveEvents || 0)) / (previousKPIs.totalActiveEvents || 1)) * 100
+      ? ((activeEventsCount - (previousKPIs.totalActiveEvents || 0)) / (previousKPIs.totalActiveEvents || 1)) * 100
       : 0,
     tickets: previousKPIs && previousKPIs.totalTicketsSold && previousKPIs.totalTicketsSold > 0
-      ? ((totalTicketsSold - (previousKPIs.totalTicketsSold || 0)) / (previousKPIs.totalTicketsSold || 1)) * 100
+      ? ((ticketsSoldCount - (previousKPIs.totalTicketsSold || 0)) / (previousKPIs.totalTicketsSold || 1)) * 100
       : 0,
     revenue: previousKPIs && previousKPIs.totalRevenue && previousKPIs.totalRevenue > 0
       ? ((totalRevenue - (previousKPIs.totalRevenue || 0)) / (previousKPIs.totalRevenue || 1)) * 100
       : 0,
     users: previousKPIs && previousKPIs.activeUsers && previousKPIs.activeUsers > 0
-      ? ((activeUsers - (previousKPIs.activeUsers || 0)) / (previousKPIs.activeUsers || 1)) * 100
+      ? ((activeUsersCount - (previousKPIs.activeUsers || 0)) / (previousKPIs.activeUsers || 1)) * 100
       : 0,
   }
 
   return {
-    totalActiveEvents: totalActiveEvents || 0,
-    totalTicketsSold: totalTicketsSold || 0,
+    totalActiveEvents: activeEventsCount,
+    totalTicketsSold: ticketsSoldCount,
     totalRevenue,
-    activeUsers: activeUsers || 0,
+    activeUsers: activeUsersCount,
     growthRate,
   }
 }
