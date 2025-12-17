@@ -64,14 +64,14 @@ export async function generateSecurityToken(
     .sign(JWT_SECRET)
 
   // Update band with token information
-  await supabase
-    .from('nfc_bands')
+  await ((supabase
+    .from('nfc_bands') as any)
     .update({
       security_token: jwt,
       token_issued_at: new Date().toISOString(),
       token_expires_at: new Date(expiresAt * 1000).toISOString(),
     })
-    .eq('id', bandId)
+    .eq('id', bandId))
 
   return jwt
 }
