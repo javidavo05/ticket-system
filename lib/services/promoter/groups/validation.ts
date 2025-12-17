@@ -21,11 +21,11 @@ export async function validatePromoterAccess(
 ): Promise<GroupValidationResult> {
   const supabase = await createServiceRoleClient()
 
-  const { data: group, error } = await supabase
+  const { data: group, error } = await (supabase
     .from('ticket_groups')
     .select('promoter_id, organization_id, event_id')
     .eq('id', groupId)
-    .single()
+    .single() as any)
 
   if (error || !group) {
     return {
@@ -34,7 +34,9 @@ export async function validatePromoterAccess(
     }
   }
 
-  if (group.promoter_id !== promoterId) {
+  const groupData = group as any
+
+  if (groupData.promoter_id !== promoterId) {
     return {
       isValid: false,
       reason: 'Promoter does not have access to this group',
@@ -52,11 +54,11 @@ export async function validateGroupCanBeAssigned(
 ): Promise<GroupValidationResult> {
   const supabase = await createServiceRoleClient()
 
-  const { data: group, error } = await supabase
+  const { data: group, error } = await (supabase
     .from('ticket_groups')
     .select('status, tickets_assigned, total_tickets')
     .eq('id', groupId)
-    .single()
+    .single() as any)
 
   if (error || !group) {
     return {
@@ -65,21 +67,23 @@ export async function validateGroupCanBeAssigned(
     }
   }
 
-  if (group.status === 'cancelled') {
+  const groupData = group as any
+
+  if (groupData.status === 'cancelled') {
     return {
       isValid: false,
       reason: 'Cannot assign tickets to a cancelled group',
     }
   }
 
-  if (group.status === 'completed') {
+  if (groupData.status === 'completed') {
     return {
       isValid: false,
       reason: 'Cannot assign tickets to a completed group',
     }
   }
 
-  if (group.tickets_assigned >= group.total_tickets) {
+  if ((groupData.tickets_assigned || 0) >= (groupData.total_tickets || 0)) {
     return {
       isValid: false,
       reason: 'All tickets in this group have already been assigned',
@@ -97,13 +101,13 @@ export async function validateGroupCanBeCompleted(
 ): Promise<GroupValidationResult> {
   const supabase = await createServiceRoleClient()
 
-  const { data: group, error } = await supabase
+  const { data: group, error } = await (supabase
     .from('ticket_groups')
     .select(
       'status, tickets_assigned, total_tickets, amount_paid, total_amount, allows_partial'
     )
     .eq('id', groupId)
-    .single()
+    .single() as any)
 
   if (error || !group) {
     return {
@@ -112,14 +116,16 @@ export async function validateGroupCanBeCompleted(
     }
   }
 
-  if (group.status === 'cancelled') {
+  const groupData = group as any
+
+  if (groupData.status === 'cancelled') {
     return {
       isValid: false,
       reason: 'Cannot complete a cancelled group',
     }
   }
 
-  if (group.status === 'completed') {
+  if (groupData.status === 'completed') {
     return {
       isValid: false,
       reason: 'Group is already completed',
@@ -127,18 +133,20 @@ export async function validateGroupCanBeCompleted(
   }
 
   // Check that all tickets are assigned
-  if (group.tickets_assigned < group.total_tickets) {
+  const ticketsAssigned = groupData.tickets_assigned || 0
+  const totalTickets = groupData.total_tickets || 0
+  if (ticketsAssigned < totalTickets) {
     return {
       isValid: false,
-      reason: `Not all tickets are assigned. ${group.total_tickets - group.tickets_assigned} tickets remaining.`,
+      reason: `Not all tickets are assigned. ${totalTickets - ticketsAssigned} tickets remaining.`,
     }
   }
 
   // Check payment status
-  const amountPaid = parseFloat(group.amount_paid as string)
-  const totalAmount = parseFloat(group.total_amount as string)
+  const amountPaid = parseFloat((groupData.amount_paid || '0') as string)
+  const totalAmount = parseFloat((groupData.total_amount || '0') as string)
 
-  if (!group.allows_partial && amountPaid < totalAmount) {
+  if (!groupData.allows_partial && amountPaid < totalAmount) {
     return {
       isValid: false,
       reason: `Payment is not complete. ${totalAmount - amountPaid} remaining.`,
@@ -174,11 +182,11 @@ export async function validateTicketAvailability(
 
   // Verify ticket type belongs to event
   const supabase = await createServiceRoleClient()
-  const { data: ticketType, error } = await supabase
+  const { data: ticketType, error } = await (supabase
     .from('ticket_types')
     .select('event_id')
     .eq('id', ticketTypeId)
-    .single()
+    .single() as any)
 
   if (error || !ticketType) {
     return {
@@ -187,7 +195,9 @@ export async function validateTicketAvailability(
     }
   }
 
-  if (ticketType.event_id !== eventId) {
+  const ticketTypeData = ticketType as any
+
+  if (ticketTypeData.event_id !== eventId) {
     return {
       isValid: false,
       reason: 'Ticket type does not belong to the specified event',
@@ -207,11 +217,11 @@ export async function validatePromoterOrganization(
   const supabase = await createServiceRoleClient()
 
   // Get event organization
-  const { data: event, error: eventError } = await supabase
+  const { data: event, error: eventError } = await (supabase
     .from('events')
     .select('organization_id')
     .eq('id', eventId)
-    .single()
+    .single() as any)
 
   if (eventError || !event) {
     return {
@@ -220,17 +230,19 @@ export async function validatePromoterOrganization(
     }
   }
 
-  if (!event.organization_id) {
+  const eventData = event as any
+
+  if (!eventData.organization_id) {
     // Event has no organization, allow
     return { isValid: true }
   }
 
   // Get promoter organization
-  const { data: promoter, error: promoterError } = await supabase
+  const { data: promoter, error: promoterError } = await (supabase
     .from('users')
     .select('organization_id')
     .eq('id', promoterId)
-    .single()
+    .single() as any)
 
   if (promoterError || !promoter) {
     return {
@@ -239,7 +251,9 @@ export async function validatePromoterOrganization(
     }
   }
 
-  if (promoter.organization_id !== event.organization_id) {
+  const promoterData = promoter as any
+
+  if (promoterData.organization_id !== eventData.organization_id) {
     return {
       isValid: false,
       reason: 'Promoter does not belong to the event organization',
