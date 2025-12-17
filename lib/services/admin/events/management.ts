@@ -11,18 +11,18 @@ export async function validateEventOwnership(userId: string, eventId: string): P
   const supabase = await createServiceRoleClient()
 
   // Get event
-  const { data: event, error } = await supabase
+  const { data: event, error } = await (supabase
     .from('events')
     .select('created_by, organization_id')
     .eq('id', eventId)
-    .single()
+    .single() as any)
 
   if (error || !event) {
     return false
   }
 
   // Check if user is creator
-  if (event.created_by === userId) {
+  if ((event as any).created_by === userId) {
     return true
   }
 
