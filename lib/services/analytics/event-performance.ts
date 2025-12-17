@@ -77,21 +77,22 @@ export async function getEventPerformance(
   // Get tickets with filters
   let ticketsQuery = supabase
     .from('tickets')
-    .select('id, status, scan_count, ticket_type_id, created_at, ticket_types!inner(name, price)')
+    .select('id, status, scan_count, ticket_type_id, payment_id, created_at, ticket_types!inner(name, price)')
     .eq('event_id', eventId)
 
   if (dateRange) {
     ticketsQuery = ticketsQuery.gte('created_at', dateRange.start).lte('created_at', dateRange.end)
   }
 
-  const { data: tickets, error: ticketsError } = await ticketsQuery
+  const { data: tickets, error: ticketsError } = await (ticketsQuery as any)
 
   if (ticketsError) {
     throw new Error(`Error fetching tickets: ${ticketsError.message}`)
   }
 
-  const ticketsSold = (tickets || []).filter((t) => t.status === 'paid' || t.status === 'used').length
-  const ticketsScanned = (tickets || []).filter((t) => t.scan_count > 0).length
+  const ticketsData = (tickets || []) as any[]
+  const ticketsSold = ticketsData.filter((t) => t.status === 'paid' || t.status === 'used').length
+  const ticketsScanned = ticketsData.filter((t) => t.scan_count > 0).length
 
   // Get revenue from payments
   let paymentsQuery = supabase
@@ -100,7 +101,7 @@ export async function getEventPerformance(
     .eq('status', 'completed')
 
   // Get payment IDs from tickets
-  const paymentIds = (tickets || [])
+  const paymentIds = ticketsData
     .map((t) => t.payment_id)
     .filter(Boolean) as string[]
 
