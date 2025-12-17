@@ -8,6 +8,7 @@ import {
 } from './idempotency'
 import { calculateNextRetry, shouldRetry, isPermanentError, getErrorCode } from './retry'
 import { logAuditEvent } from '@/lib/security/audit'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 import type { NextRequest } from 'next/server'
 
 export interface EmailDeliveryOptions {
