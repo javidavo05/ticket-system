@@ -78,7 +78,28 @@ export default async function TicketPage({ params, searchParams }: PageProps) {
     notFound()
   }
 
-  const event = Array.isArray(ticket.events) ? ticket.events[0] : ticket.events
+  // Type assertion for Supabase relation
+  const ticketWithEvent = ticket as typeof ticket & {
+    events: Array<{
+      id: string
+      name: string
+      start_date: string
+      end_date: string
+      location_name: string | null
+      location_address: string | null
+    }> | {
+      id: string
+      name: string
+      start_date: string
+      end_date: string
+      location_name: string | null
+      location_address: string | null
+    } | null
+  }
+
+  const event = Array.isArray(ticketWithEvent.events) 
+    ? ticketWithEvent.events[0] 
+    : ticketWithEvent.events
   if (!event) {
     notFound()
   }
