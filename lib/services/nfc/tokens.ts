@@ -126,18 +126,19 @@ export async function refreshSecurityToken(bandId: string): Promise<string> {
   const supabase = await createServiceRoleClient()
 
   // Check if band exists and is active
-  const { data: band, error } = await supabase
+  const { data: band, error } = await (supabase
     .from('nfc_bands')
     .select('id, status')
     .eq('id', bandId)
-    .single()
+    .single() as any)
 
   if (error || !band) {
     throw new NotFoundError('NFC band')
   }
 
-  if (band.status !== 'active') {
-    throw new ValidationError(`NFC band is ${band.status}`)
+  const bandData = band as any
+  if (bandData.status !== 'active') {
+    throw new ValidationError(`NFC band is ${bandData.status}`)
   }
 
   return generateSecurityToken(bandId)
