@@ -278,6 +278,7 @@ export async function getUserActivityMetrics(dateRange?: { start: string; end: s
   }
 
   const { count: newUsers } = await newUsersQuery
+  const newUsersCount = newUsers || 0
 
   // Returning users (users who made purchases in period)
   let returningUsersQuery = supabase
@@ -294,7 +295,7 @@ export async function getUserActivityMetrics(dateRange?: { start: string; end: s
   const returningUsers = uniquePurchasers.size
 
   // Retention rate (simplified - users who made purchases vs new users)
-  const retentionRate = newUsers > 0 ? (returningUsers / newUsers) * 100 : 0
+  const retentionRate = newUsersCount > 0 ? (returningUsers / newUsersCount) * 100 : 0
 
   // Activity by role
   const { data: userRoles } = await supabase
