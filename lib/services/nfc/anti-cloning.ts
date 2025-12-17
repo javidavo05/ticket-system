@@ -267,8 +267,8 @@ export async function startUsageSession(
   const sessionToken = crypto.randomUUID()
   const point = `(${location.lng},${location.lat})`
 
-  const { data: session, error } = await supabase
-    .from('nfc_usage_sessions')
+  const { data: session, error } = await ((supabase
+    .from('nfc_usage_sessions') as any)
     .insert({
       nfc_band_id: bandId,
       session_token: sessionToken,
@@ -276,28 +276,29 @@ export async function startUsageSession(
       started_at: new Date().toISOString(),
     })
     .select('id')
-    .single()
+    .single())
 
   if (error || !session) {
     throw new Error(`Failed to start usage session: ${error?.message}`)
   }
 
   // Update band's last location and concurrent use count
-  const { data: band } = await supabase
+  const { data: band } = await (supabase
     .from('nfc_bands')
     .select('concurrent_use_count')
     .eq('id', bandId)
-    .single()
+    .single() as any)
 
-  const newCount = (band?.concurrent_use_count || 0) + 1
+  const bandData = band as any
+  const newCount = (bandData?.concurrent_use_count || 0) + 1
 
-  await supabase
-    .from('nfc_bands')
+  await ((supabase
+    .from('nfc_bands') as any)
     .update({
       last_location: point,
       concurrent_use_count: newCount,
     })
-    .eq('id', bandId)
+    .eq('id', bandId))
 
   return sessionToken
 }
