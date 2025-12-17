@@ -1,6 +1,6 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb'
 
-interface QueuedScan {
+export interface QueuedScan {
   id: string // UUID generado localmente
   qrSignature: string
   scannerId: string

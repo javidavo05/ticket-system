@@ -46,7 +46,7 @@ export async function checkThemeDependencies(themeId: string): Promise<{
 export async function getThemeAssignments(themeId: string): Promise<{
   events: Array<{ id: string; name: string; slug: string }>
   organizations: Array<{ id: string; name: string }>
-  isDefaultForOrganization: boolean
+  isDefaultForOrganization?: string
 }> {
   const supabase = await createServiceRoleClient()
 
@@ -90,7 +90,7 @@ export async function getThemeAssignments(themeId: string): Promise<{
   return {
     events: events || [],
     organizations,
-    isDefaultForOrganization: theme.is_default || false,
+    isDefaultForOrganization: theme.is_default && theme.organization_id ? theme.organization_id : undefined,
   }
 }
 

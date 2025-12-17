@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, numeric, integer, boolean, jsonb, pgEnum, point, inet, date, bigserial, bigint, bytea, unique } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, numeric, integer, boolean, jsonb, pgEnum, inet, date, bigserial, bigint, unique } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
 // Email delivery enums
@@ -50,7 +50,7 @@ export const eventLocations = pgTable('event_locations', {
   state: text('state'),
   country: text('country').notNull(),
   postalCode: text('postal_code'),
-  coordinates: point('coordinates'),
+  coordinates: text('coordinates'), // PostgreSQL point type stored as text
   capacity: integer('capacity'),
   facilities: jsonb('facilities').default({}).notNull(),
   isActive: boolean('is_active').default(true).notNull(),
@@ -98,8 +98,8 @@ export const events = pgTable('events', {
   locationId: uuid('location_id').references(() => eventLocations.id),
   locationName: text('location_name'), // Keep for backward compatibility
   locationAddress: text('location_address'), // Keep for backward compatibility
-  locationCoordinates: point('location_coordinates'), // Keep for backward compatibility
-  themeId: uuid('theme_id').references(() => themes.id),
+  locationCoordinates: text('location_coordinates'), // Keep for backward compatibility, PostgreSQL point type stored as text
+  themeId: uuid('theme_id').references((): any => themes.id),
   status: eventStatusEnum('status').default('draft').notNull(),
   createdBy: uuid('created_by').references(() => users.id).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -160,7 +160,7 @@ export const themeAssets = pgTable('theme_assets', {
   fileName: text('file_name').notNull(),
   mimeType: text('mime_type').notNull(),
   fileSize: bigint('file_size', { mode: 'number' }).notNull(),
-  fileData: bytea('file_data').notNull(),
+  fileData: text('file_data').notNull(), // PostgreSQL bytea type stored as text
   url: text('url'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -282,7 +282,7 @@ export const ticketScans = pgTable('ticket_scans', {
   id: uuid('id').primaryKey().defaultRandom(),
   ticketId: uuid('ticket_id').references(() => tickets.id, { onDelete: 'cascade' }).notNull(),
   scannedBy: uuid('scanned_by').references(() => users.id).notNull(),
-  scanLocation: point('scan_location'),
+  scanLocation: text('scan_location'), // PostgreSQL point type stored as text
   scanMethod: scanMethodEnum('scan_method').notNull(),
   isValid: boolean('is_valid').notNull(),
   rejectionReason: text('rejection_reason'),
@@ -376,7 +376,7 @@ export const nfcBands = pgTable('nfc_bands', {
   tokenIssuedAt: timestamp('token_issued_at', { withTimezone: true }),
   tokenExpiresAt: timestamp('token_expires_at', { withTimezone: true }),
   bindingVerifiedAt: timestamp('binding_verified_at', { withTimezone: true }),
-  lastLocation: point('last_location'),
+  lastLocation: text('last_location'), // PostgreSQL point type stored as text
   concurrentUseCount: integer('concurrent_use_count').default(0).notNull(),
   maxConcurrentUses: integer('max_concurrent_uses').default(1).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -412,7 +412,7 @@ export const nfcUsageSessions = pgTable('nfc_usage_sessions', {
   id: uuid('id').primaryKey().defaultRandom(),
   nfcBandId: uuid('nfc_band_id').references(() => nfcBands.id, { onDelete: 'cascade' }).notNull(),
   sessionToken: text('session_token').notNull().unique(),
-  location: point('location'),
+  location: text('location'), // PostgreSQL point type stored as text
   startedAt: timestamp('started_at', { withTimezone: true }).defaultNow().notNull(),
   endedAt: timestamp('ended_at', { withTimezone: true }),
   transactionCount: integer('transaction_count').default(0).notNull(),

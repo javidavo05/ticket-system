@@ -123,7 +123,7 @@ export class AuthService {
 
     if (!existingUser) {
       // Crear registro
-      await serviceClient.from('users').insert({
+      await (serviceClient.from('users') as any).insert({
         id: userId,
         email: userData.email || '',
         full_name: userData.fullName || null,
@@ -131,12 +131,11 @@ export class AuthService {
       })
     } else {
       // Actualizar registro
-      await serviceClient
-        .from('users')
+      await (serviceClient.from('users') as any)
         .update({
-          email: userData.email || existingUser.email,
-          full_name: userData.fullName || existingUser.full_name,
-          profile_photo_url: userData.profilePhotoUrl || existingUser.profile_photo_url,
+          email: userData.email || '',
+          full_name: userData.fullName || null,
+          profile_photo_url: userData.profilePhotoUrl || null,
         })
         .eq('id', userId)
     }

@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       { error: 'Failed to resolve theme' },
       {
         status: 500,
-        headers: getThemeSecurityHeaders(),
+        headers: getThemeSecurityHeaders() as unknown as Record<string, string>,
       }
     )
   }

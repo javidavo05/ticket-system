@@ -64,6 +64,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!validation.userId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'User ID not found in validation',
+        },
+        { status: 400 }
+      )
+    }
+
     // Determine operation type if not specified
     const operationType = validated.operationType || 'access_control'
 
@@ -101,8 +111,8 @@ export async function POST(request: NextRequest) {
         validated.location
       )
 
-      // Record access control transaction
-      await supabase.from('nfc_transactions').insert({
+      // Record payment transaction
+      await (supabase.from('nfc_transactions') as any).insert({
         nfc_band_id: validation.bandId,
         user_id: validation.userId,
         event_id: validated.eventId,
@@ -124,7 +134,7 @@ export async function POST(request: NextRequest) {
     } else {
       // Access control only
       const supabase = await createServiceRoleClient()
-      await supabase.from('nfc_transactions').insert({
+      await (supabase.from('nfc_transactions') as any).insert({
         nfc_band_id: validation.bandId,
         user_id: validation.userId,
         event_id: validated.eventId,

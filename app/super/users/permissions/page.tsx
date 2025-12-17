@@ -40,10 +40,10 @@ export default async function PermissionsPage() {
               </SuperTableHeader>
               <SuperTableBody>
                 {roles.map((role) =>
-                  resources.map((resource) => (
+                  resources.map((resource, resourceIndex) => (
                     <SuperTableRow key={`${role}-${resource}`}>
                       <SuperTableCell className="font-medium text-xs">
-                        {role === resources.indexOf(resource) ? (
+                        {resourceIndex === 0 ? (
                           <span className="font-semibold">{role}</span>
                         ) : (
                           <span className="ml-4 text-text-muted">{resource}</span>

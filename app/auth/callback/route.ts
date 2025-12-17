@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
 
           if (!existingUser) {
             // Crear registro en tabla users solo si no es super admin
-            await serviceClient.from('users').insert({
+            await (serviceClient.from('users') as any).insert({
               id: data.user.id,
               email: data.user.email || '',
               full_name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || null,
@@ -38,10 +38,9 @@ export async function GET(request: NextRequest) {
             })
           } else {
             // Actualizar datos si el usuario ya existe
-            await serviceClient
-              .from('users')
+            await (serviceClient.from('users') as any)
               .update({
-                email: data.user.email || existingUser.email,
+                email: data.user.email || '',
                 full_name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || null,
                 profile_photo_url: data.user.user_metadata?.avatar_url || null,
               })

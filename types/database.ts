@@ -98,6 +98,21 @@ export type Database = {
         Insert: Omit<Database['public']['Tables']['binding_tokens']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['binding_tokens']['Insert']>
       }
+      nfc_transactions: {
+        Row: {
+          id: string
+          nfc_band_id: string
+          user_id: string
+          organization_id: string | null
+          event_id: string
+          transaction_type: 'payment' | 'access_control'
+          amount: string | null
+          zone_id: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['nfc_transactions']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['nfc_transactions']['Insert']>
+      }
     }
     Views: {}
     Functions: {}
