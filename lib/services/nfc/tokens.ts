@@ -159,32 +159,33 @@ export async function verifyBinding(
   const supabase = await createServiceRoleClient()
 
   // Get band information
-  const { data: band, error } = await supabase
+  const { data: band, error } = await (supabase
     .from('nfc_bands')
     .select('id, band_uid, user_id')
     .eq('id', bandId)
-    .single()
+    .single() as any)
 
   if (error || !band) {
     throw new NotFoundError('NFC band')
   }
 
+  const bandData = band as any
   // Simple challenge-response verification
   // In production, use proper cryptographic verification
   // For now, we'll use a simple hash-based approach
-  const expectedResponse = await generateChallengeResponse(band.band_uid, challenge)
+  const expectedResponse = await generateChallengeResponse(bandData.band_uid, challenge)
 
   if (response !== expectedResponse) {
     return false
   }
 
   // Mark binding as verified
-  await supabase
-    .from('nfc_bands')
+  await ((supabase
+    .from('nfc_bands') as any)
     .update({
       binding_verified_at: new Date().toISOString(),
     })
-    .eq('id', bandId)
+    .eq('id', bandId))
 
   return true
 }
