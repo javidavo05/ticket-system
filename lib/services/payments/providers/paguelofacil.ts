@@ -83,7 +83,7 @@ export class PagueloFacilProvider extends PaymentProvider {
 
     return {
       paymentId: data.payment_id,
-      status: this.mapStatus(data.status),
+      status: this.mapStatusForWebhook(data.status),
       providerPaymentId: data.payment_id,
       metadata: data.metadata,
     }
@@ -127,6 +127,19 @@ export class PagueloFacilProvider extends PaymentProvider {
       'failed': 'failed',
       'cancelled': 'failed',
       'refunded': 'refunded',
+    }
+    return statusMap[status.toLowerCase()] || 'pending'
+  }
+
+  private mapStatusForWebhook(status: string): 'pending' | 'completed' | 'failed' {
+    const statusMap: Record<string, 'pending' | 'completed' | 'failed'> = {
+      'pending': 'pending',
+      'processing': 'pending', // Map processing to pending for webhook result
+      'completed': 'completed',
+      'paid': 'completed',
+      'failed': 'failed',
+      'cancelled': 'failed',
+      'refunded': 'failed', // Map refunded to failed for webhook result
     }
     return statusMap[status.toLowerCase()] || 'pending'
   }
