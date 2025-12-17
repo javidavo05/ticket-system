@@ -129,12 +129,17 @@ export class NFCPayloadCodec {
       throw new Error('Invalid NDEF record format')
     }
 
-    const data = new Uint8Array(record.data)
+    // Convert string to ArrayBuffer if necessary
+    const dataBuffer = typeof record.data === 'string' 
+      ? new TextEncoder().encode(record.data).buffer 
+      : record.data
+
+    const data = new Uint8Array(dataBuffer)
     if (data.length < PAYLOAD_SIZE) {
       throw new Error(`Payload too small: ${data.length} bytes, expected ${PAYLOAD_SIZE}`)
     }
 
-    const view = new DataView(record.data)
+    const view = new DataView(dataBuffer)
 
     // Read version
     const version = view.getUint8(OFFSET_VERSION)
