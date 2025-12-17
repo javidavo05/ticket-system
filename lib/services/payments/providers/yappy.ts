@@ -87,7 +87,7 @@ export class YappyProvider extends PaymentProvider {
 
     return {
       paymentId: data.payment_id,
-      status: this.mapStatus(data.status),
+      status: this.mapStatusForWebhook(data.status),
       providerPaymentId: data.payment_id,
       metadata: data.metadata,
     }
@@ -133,6 +133,19 @@ export class YappyProvider extends PaymentProvider {
       'failed': 'failed',
       'cancelled': 'failed',
       'refunded': 'refunded',
+    }
+    return statusMap[yappyStatus.toLowerCase()] || 'pending'
+  }
+
+  private mapStatusForWebhook(yappyStatus: string): 'pending' | 'completed' | 'failed' {
+    const statusMap: Record<string, 'pending' | 'completed' | 'failed'> = {
+      'pending': 'pending',
+      'processing': 'pending', // Map processing to pending for webhook result
+      'completed': 'completed',
+      'paid': 'completed',
+      'failed': 'failed',
+      'cancelled': 'failed',
+      'refunded': 'failed', // Map refunded to failed for webhook result
     }
     return statusMap[yappyStatus.toLowerCase()] || 'pending'
   }
