@@ -29,13 +29,11 @@ export async function POST(request: NextRequest) {
     const supabase = await createServiceRoleClient()
 
     // Validate binding token
-    const tokenQuery = supabase
+    const { data: bindingTokenData, error: tokenError } = await supabase
       .from('binding_tokens')
       .select('id, user_id, expires_at, used_at')
       .eq('token', validated.token)
       .single()
-    
-    const { data: bindingTokenData, error: tokenError } = await tokenQuery
 
     if (tokenError || !bindingTokenData) {
       return NextResponse.json(
@@ -119,18 +117,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Mark token as used (prevent reuse)
-    // Use SQL directly to avoid type inference issues with Supabase client
-    const updateResult = await supabase.rpc('update_binding_token_used', {
-      token_id: bindingToken.id,
-      used_at: new Date().toISOString(),
-    }).catch(async () => {
-      // Fallback to direct SQL if RPC doesn't exist
-      const updateClient = await createServiceRoleClient()
-      return await (updateClient
-        .from('binding_tokens')
-        .update({ used_at: new Date().toISOString() } as any)
-        .eq('id', bindingToken.id) as any)
-    })
+    // Create a new client instance to avoid type inference issues
+    const updateSupabase = await createServiceRoleClient()
+    const updateQuery = (updateSupabase
+      .from('binding_tokens' as any)
+      .update({ used_at: new Date().toISOString() } as any) as any)
+      .eq('id', bindingToken.id)
+    
+    await updateQuery
 
     let bandId: string
 
