@@ -117,26 +117,32 @@ export async function POST(request: NextRequest) {
     }
 
     // Mark token as used (prevent reuse)
-    // Create a new client instance to avoid type inference issues
+    // Use a separate client to avoid type inference issues from the previous query
     const updateSupabase = await createServiceRoleClient()
-    const updateQuery = (updateSupabase
-      .from('binding_tokens' as any)
-      .update({ used_at: new Date().toISOString() } as any) as any)
+    await (updateSupabase as any)
+      .from('binding_tokens')
+      .update({ used_at: new Date().toISOString() })
       .eq('id', bindingToken.id)
-    
-    await updateQuery
 
     let bandId: string
 
     // If bandUid provided, check if band exists
     if (validated.bandUid) {
-      const { data: existingBand } = await supabase
+      const { data: existingBandData } = await supabase
         .from('nfc_bands')
         .select('id, user_id, status')
         .eq('band_uid', validated.bandUid)
         .single()
 
-      if (existingBand) {
+      if (existingBandData) {
+        // Type assertion for Supabase result
+        type NFCBandRow = {
+          id: string
+          user_id: string | null
+          status: string
+        }
+        const existingBand = existingBandData as unknown as NFCBandRow
+
         // Band exists
         if (existingBand.user_id && existingBand.user_id !== user.id) {
           return NextResponse.json(
