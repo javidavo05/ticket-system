@@ -214,20 +214,27 @@ export async function handleCloningAlert(bandId: string, reason: string): Promis
   const supabase = await createServiceRoleClient()
 
   // Update band status to deactivated temporarily
-  await supabase
+  const { data: existingBand } = await (supabase
     .from('nfc_bands')
+    .select('metadata')
+    .eq('id', bandId)
+    .single() as any)
+
+  const existingMetadata = (existingBand as any)?.metadata as Record<string, any> || {}
+
+  await ((supabase
+    .from('nfc_bands') as any)
     .update({
       status: 'deactivated',
       metadata: {
-        ...((await supabase.from('nfc_bands').select('metadata').eq('id', bandId).single())
-          .data?.metadata as Record<string, any> || {}),
+        ...existingMetadata,
         cloningAlert: {
           reason,
           detectedAt: new Date().toISOString(),
         },
       },
     })
-    .eq('id', bandId)
+    .eq('id', bandId))
 
   // Log audit event (would need audit service)
   // await logAuditEvent({
