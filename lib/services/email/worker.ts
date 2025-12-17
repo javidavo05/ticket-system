@@ -14,18 +14,19 @@ export async function processEmailRetryQueue(limit: number = 50): Promise<{
   const now = new Date().toISOString()
 
   // Get emails ready for retry
-  const { data: pendingEmails, error: fetchError } = await supabase
+  const { data: pendingEmails, error: fetchError } = await (supabase
     .from('email_deliveries')
     .select('id, status, attempt_count, max_attempts')
     .in('status', ['pending', 'retrying'])
     .lte('next_retry_at', now)
-    .limit(limit)
+    .limit(limit) as any)
 
   if (fetchError) {
     throw new Error(`Failed to fetch pending emails: ${fetchError.message}`)
   }
 
-  if (!pendingEmails || pendingEmails.length === 0) {
+  const emailsData = (pendingEmails || []) as any[]
+  if (emailsData.length === 0) {
     return { processed: 0, succeeded: 0, failed: 0 }
   }
 
@@ -33,7 +34,7 @@ export async function processEmailRetryQueue(limit: number = 50): Promise<{
   let failed = 0
 
   // Process each email
-  for (const email of pendingEmails) {
+  for (const email of emailsData) {
     try {
       const result = await retryEmailDelivery(email.id)
 
@@ -49,7 +50,7 @@ export async function processEmailRetryQueue(limit: number = 50): Promise<{
   }
 
   return {
-    processed: pendingEmails.length,
+    processed: emailsData.length,
     succeeded,
     failed,
   }
@@ -62,34 +63,35 @@ export async function scheduleEmailRetry(deliveryId: string): Promise<void> {
   const supabase = await createServiceRoleClient()
 
   // Get current delivery record
-  const { data: delivery, error: fetchError } = await supabase
+  const { data: delivery, error: fetchError } = await (supabase
     .from('email_deliveries')
     .select('attempt_count, max_attempts')
     .eq('id', deliveryId)
-    .single()
+    .single() as any)
 
   if (fetchError || !delivery) {
     throw new Error(`Email delivery not found: ${deliveryId}`)
   }
 
+  const deliveryData = delivery as any
   // Check if max attempts reached
-  if (delivery.attempt_count >= delivery.max_attempts) {
+  if (deliveryData.attempt_count >= deliveryData.max_attempts) {
     throw new Error(`Maximum retry attempts reached for email ${deliveryId}`)
   }
 
   // Calculate next retry time
   const { calculateNextRetry } = await import('./retry')
-  const nextRetryAt = calculateNextRetry(delivery.attempt_count)
+  const nextRetryAt = calculateNextRetry(deliveryData.attempt_count)
 
   // Update delivery record
-  const { error: updateError } = await supabase
-    .from('email_deliveries')
+  const { error: updateError } = await ((supabase
+    .from('email_deliveries') as any)
     .update({
       status: 'retrying',
       next_retry_at: nextRetryAt.toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .eq('id', deliveryId)
+    .eq('id', deliveryId))
 
   if (updateError) {
     throw new Error(`Failed to schedule email retry: ${updateError.message}`)
