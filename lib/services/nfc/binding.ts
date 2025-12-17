@@ -24,22 +24,23 @@ export async function initiateBinding(bandUid: string, userId: string): Promise<
   const supabase = await createServiceRoleClient()
 
   // Check if band exists
-  const { data: band, error } = await supabase
+  const { data: band, error } = await (supabase
     .from('nfc_bands')
     .select('id, user_id, status')
     .eq('band_uid', bandUid)
-    .single()
+    .single() as any)
 
   if (error || !band) {
     throw new NotFoundError('NFC band')
   }
 
-  if (band.status !== 'active') {
-    throw new ValidationError(`NFC band is ${band.status}`)
+  const bandData = band as any
+  if (bandData.status !== 'active') {
+    throw new ValidationError(`NFC band is ${bandData.status}`)
   }
 
   // Verify user owns the band or is binding it
-  if (band.user_id && band.user_id !== userId) {
+  if (bandData.user_id && bandData.user_id !== userId) {
     throw new ValidationError('NFC band is already bound to another user')
   }
 
@@ -48,7 +49,7 @@ export async function initiateBinding(bandUid: string, userId: string): Promise<
   const expiresAt = Date.now() + CHALLENGE_EXPIRY_MS
 
   // Store challenge
-  bindingChallenges.set(band.id, {
+  bindingChallenges.set(bandData.id, {
     challenge,
     expiresAt,
     userId,
@@ -96,19 +97,20 @@ export async function completeBinding(
   }
 
   // Update band user_id if not set
-  const { data: band } = await supabase
+  const { data: band } = await (supabase
     .from('nfc_bands')
     .select('user_id')
     .eq('id', bandId)
-    .single()
+    .single() as any)
 
-  if (band && !band.user_id) {
-    await supabase
-      .from('nfc_bands')
+  const bandData = band as any
+  if (bandData && !bandData.user_id) {
+    await ((supabase
+      .from('nfc_bands') as any)
       .update({
         user_id: stored.userId,
       })
-      .eq('id', bandId)
+      .eq('id', bandId))
   }
 
   // Remove challenge
@@ -129,23 +131,24 @@ export async function completeBinding(
 export async function verifyBindingOwnership(bandId: string, userId: string): Promise<boolean> {
   const supabase = await createServiceRoleClient()
 
-  const { data: band, error } = await supabase
+  const { data: band, error } = await (supabase
     .from('nfc_bands')
     .select('user_id, binding_verified_at')
     .eq('id', bandId)
-    .single()
+    .single() as any)
 
   if (error || !band) {
     return false
   }
 
+  const bandData = band as any
   // Check user ownership
-  if (band.user_id !== userId) {
+  if (bandData.user_id !== userId) {
     return false
   }
 
   // Check if binding was verified
-  if (!band.binding_verified_at) {
+  if (!bandData.binding_verified_at) {
     return false
   }
 
