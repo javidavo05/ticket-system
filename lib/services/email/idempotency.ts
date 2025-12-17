@@ -105,8 +105,8 @@ export async function createEmailDeliveryRecord(data: {
 }): Promise<string> {
   const supabase = await createServiceRoleClient()
 
-  const { data: delivery, error } = await supabase
-    .from('email_deliveries')
+  const { data: delivery, error } = await ((supabase
+    .from('email_deliveries') as any)
     .insert({
       email_type: data.emailType,
       recipient_email: data.recipientEmail,
@@ -121,13 +121,13 @@ export async function createEmailDeliveryRecord(data: {
       max_attempts: data.maxAttempts || 5,
     })
     .select('id')
-    .single()
+    .single())
 
   if (error || !delivery) {
     throw new Error(`Failed to create email delivery record: ${error?.message}`)
   }
 
-  return delivery.id
+  return (delivery as any).id
 }
 
 /**
