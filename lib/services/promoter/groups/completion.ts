@@ -44,49 +44,52 @@ export async function completeGroup(
   const supabase = await createServiceRoleClient()
 
   // Get group info
-  const { data: group, error: groupError } = await supabase
+  const { data: group, error: groupError } = await (supabase
     .from('ticket_groups')
     .select('status, event_id, ticket_type_id, organization_id')
     .eq('id', groupId)
-    .single()
+    .single() as any)
 
   if (groupError || !group) {
     throw new NotFoundError('Ticket group')
   }
 
+  const groupData = group as any
+
   // Validate status transition
-  const transitionValidation = validateGroupStatusTransition(group.status, 'completed')
+  const transitionValidation = validateGroupStatusTransition(groupData.status, 'completed')
   if (!transitionValidation.isValid) {
     throw new ValidationError(transitionValidation.reason || 'Invalid status transition')
   }
 
   // Update group status
-  const { error: updateError } = await supabase
-    .from('ticket_groups')
+  const { error: updateError } = await ((supabase
+    .from('ticket_groups') as any)
     .update({
       status: 'completed',
       completed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .eq('id', groupId)
+    .eq('id', groupId))
 
   if (updateError) {
     throw new Error(`Failed to complete group: ${updateError.message}`)
   }
 
   // Transition all assigned tickets to PAID status
-  const { data: tickets, error: ticketsError } = await supabase
+  const { data: tickets, error: ticketsError } = await (supabase
     .from('tickets')
     .select('id, status')
     .eq('ticket_group_id', groupId)
-    .not('assigned_to_email', 'is', null)
+    .not('assigned_to_email', 'is', null) as any)
 
   if (ticketsError) {
     throw new Error(`Failed to fetch tickets: ${ticketsError.message}`)
   }
 
+  const ticketsData = (tickets || []) as any[]
   // Transition tickets to paid status
-  for (const ticket of tickets || []) {
+  for (const ticket of ticketsData) {
     try {
       await transitionTicket(ticket.id, TICKET_STATUS.PAID, 'Group completed', completedBy)
     } catch (error) {
@@ -102,9 +105,9 @@ export async function completeGroup(
     resourceType: 'ticket_group',
     resourceId: groupId,
     metadata: {
-      eventId: group.event_id,
-      ticketTypeId: group.ticket_type_id,
-      organizationId: group.organization_id,
+      eventId: groupData.event_id,
+      ticketTypeId: groupData.ticket_type_id,
+      organizationId: groupData.organization_id,
     },
   })
 }
@@ -126,18 +129,20 @@ export async function cancelGroup(
   const supabase = await createServiceRoleClient()
 
   // Get group info
-  const { data: group, error: groupError } = await supabase
+  const { data: group, error: groupError } = await (supabase
     .from('ticket_groups')
     .select('status, event_id, ticket_type_id, organization_id')
     .eq('id', groupId)
-    .single()
+    .single() as any)
 
   if (groupError || !group) {
     throw new NotFoundError('Ticket group')
   }
 
+  const groupData = group as any
+
   // Validate status transition
-  const transitionValidation = validateGroupStatusTransition(group.status, 'cancelled')
+  const transitionValidation = validateGroupStatusTransition(groupData.status, 'cancelled')
   if (!transitionValidation.isValid) {
     throw new ValidationError(transitionValidation.reason || 'Invalid status transition')
   }
@@ -147,8 +152,8 @@ export async function cancelGroup(
   }
 
   // Update group status
-  const { error: updateError } = await supabase
-    .from('ticket_groups')
+  const { error: updateError } = await ((supabase
+    .from('ticket_groups') as any)
     .update({
       status: 'cancelled',
       cancelled_at: new Date().toISOString(),
@@ -156,24 +161,25 @@ export async function cancelGroup(
       cancellation_reason: reason,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', groupId)
+    .eq('id', groupId))
 
   if (updateError) {
     throw new Error(`Failed to cancel group: ${updateError.message}`)
   }
 
   // Revoke all tickets in the group
-  const { data: tickets, error: ticketsError } = await supabase
+  const { data: tickets, error: ticketsError } = await (supabase
     .from('tickets')
     .select('id')
-    .eq('ticket_group_id', groupId)
+    .eq('ticket_group_id', groupId) as any)
 
   if (ticketsError) {
     throw new Error(`Failed to fetch tickets: ${ticketsError.message}`)
   }
 
+  const ticketsData = (tickets || []) as any[]
   // Revoke tickets
-  for (const ticket of tickets || []) {
+  for (const ticket of ticketsData) {
     try {
       await transitionTicket(ticket.id, TICKET_STATUS.REVOKED, 'Group cancelled', cancelledBy)
     } catch (error) {
@@ -183,27 +189,30 @@ export async function cancelGroup(
   }
 
   // Get payment_id from group
-  const { data: groupWithPayment, error: paymentGroupError } = await supabase
+  const { data: groupWithPayment, error: paymentGroupError } = await (supabase
     .from('ticket_groups')
     .select('payment_id')
     .eq('id', groupId)
-    .single()
+    .single() as any)
 
   // Cancel payment if exists
-  if (!paymentGroupError && groupWithPayment?.payment_id) {
-    const { error: paymentError } = await supabase
-      .from('payments')
-      .update({
-        status: 'cancelled',
-        cancelled_at: new Date().toISOString(),
-        cancelled_by: cancelledBy,
-        cancellation_reason: `Group cancelled: ${reason}`,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', groupWithPayment.payment_id)
+  if (!paymentGroupError && groupWithPayment) {
+    const groupWithPaymentData = groupWithPayment as any
+    if (groupWithPaymentData.payment_id) {
+      const { error: paymentError } = await ((supabase
+        .from('payments') as any)
+        .update({
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString(),
+          cancelled_by: cancelledBy,
+          cancellation_reason: `Group cancelled: ${reason}`,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', groupWithPaymentData.payment_id))
 
-    if (paymentError) {
-      console.error(`Failed to cancel payment: ${paymentError.message}`)
+      if (paymentError) {
+        console.error(`Failed to cancel payment: ${paymentError.message}`)
+      }
     }
   }
 
@@ -214,9 +223,9 @@ export async function cancelGroup(
     resourceType: 'ticket_group',
     resourceId: groupId,
     metadata: {
-      eventId: group.event_id,
-      ticketTypeId: group.ticket_type_id,
-      organizationId: group.organization_id,
+      eventId: groupData.event_id,
+      ticketTypeId: groupData.ticket_type_id,
+      organizationId: groupData.organization_id,
       reason,
     },
   })
@@ -229,32 +238,34 @@ export async function getGroupStatistics(groupId: string): Promise<GroupStatisti
   const supabase = await createServiceRoleClient()
 
   // Get group info
-  const { data: group, error: groupError } = await supabase
+  const { data: group, error: groupError } = await (supabase
     .from('ticket_groups')
     .select(
       'total_tickets, tickets_assigned, tickets_sold, total_amount, amount_paid, status'
     )
     .eq('id', groupId)
-    .single()
+    .single() as any)
 
   if (groupError || !group) {
     throw new NotFoundError('Ticket group')
   }
 
-  const totalAmount = parseFloat(group.total_amount as string)
-  const amountPaid = parseFloat(group.amount_paid as string)
+  const groupData = group as any
+
+  const totalAmount = parseFloat(groupData.total_amount as string)
+  const amountPaid = parseFloat(groupData.amount_paid as string)
   const remainingAmount = totalAmount - amountPaid
   const paymentComplete = await isGroupPaymentComplete(groupId)
 
   return {
-    totalTickets: group.total_tickets,
-    ticketsAssigned: group.tickets_assigned,
-    ticketsSold: group.tickets_sold,
+    totalTickets: groupData.total_tickets || 0,
+    ticketsAssigned: groupData.tickets_assigned || 0,
+    ticketsSold: groupData.tickets_sold || 0,
     totalAmount,
     amountPaid,
     remainingAmount,
     paymentComplete,
-    status: group.status,
+    status: groupData.status || '',
   }
 }
 
