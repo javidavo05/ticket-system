@@ -54,15 +54,15 @@ export class BankTransferProvider extends PaymentProvider {
     }
   }
 
-  private mapStatus(status: string): 'pending' | 'processing' | 'completed' | 'failed' | 'refunded' {
-    const statusMap: Record<string, 'pending' | 'processing' | 'completed' | 'failed' | 'refunded'> = {
+  private mapStatus(status: string): 'pending' | 'completed' | 'failed' {
+    const statusMap: Record<string, 'pending' | 'completed' | 'failed'> = {
       'pending': 'pending',
-      'processing': 'processing',
+      'processing': 'pending', // Map processing to pending for webhook result
       'completed': 'completed',
       'confirmed': 'completed',
       'failed': 'failed',
       'cancelled': 'failed',
-      'refunded': 'refunded',
+      'refunded': 'failed', // Map refunded to failed for webhook result
     }
     return statusMap[status.toLowerCase()] || 'pending'
   }
