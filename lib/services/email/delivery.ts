@@ -283,44 +283,45 @@ export async function retryEmailDelivery(
   const supabase = await createServiceRoleClient()
 
   // Get delivery record
-  const { data: delivery, error: fetchError } = await supabase
+  const { data: delivery, error: fetchError } = await (supabase
     .from('email_deliveries')
     .select('*')
     .eq('id', deliveryId)
-    .single()
+    .single() as any)
 
   if (fetchError || !delivery) {
     throw new Error(`Email delivery not found: ${deliveryId}`)
   }
 
+  const deliveryData = delivery as any
   // Check if already sent
-  if (delivery.status === 'sent') {
+  if (deliveryData.status === 'sent') {
     return {
       success: true,
-      deliveryId: delivery.id,
-      messageId: delivery.provider_message_id || undefined,
+      deliveryId: deliveryData.id,
+      messageId: deliveryData.provider_message_id || undefined,
       alreadySent: true,
     }
   }
 
   // Check if max attempts reached
-  if (delivery.attempt_count >= delivery.max_attempts) {
+  if (deliveryData.attempt_count >= deliveryData.max_attempts) {
     return {
       success: false,
-      deliveryId: delivery.id,
+      deliveryId: deliveryData.id,
       error: 'Maximum retry attempts reached',
       errorCode: 'MAX_ATTEMPTS',
     }
   }
 
   const provider = getEmailProvider()
-  const newAttemptCount = delivery.attempt_count + 1
+  const newAttemptCount = deliveryData.attempt_count + 1
 
   try {
     // We need to get the email content from the original send attempt
     // For retries, we'll need to reconstruct or store the email content
     // For now, we'll throw an error if metadata doesn't contain the content
-    const metadata = (delivery.metadata as Record<string, any>) || {}
+    const metadata = (deliveryData.metadata as Record<string, any>) || {}
     
     // Check if we have the email content in metadata
     if (!metadata.subject || !metadata.html) {
@@ -332,7 +333,7 @@ export async function retryEmailDelivery(
     const text = metadata.text || ''
 
     const result = await provider.send({
-      to: delivery.recipient_email,
+      to: deliveryData.recipient_email,
       subject,
       html,
       text,
@@ -349,16 +350,16 @@ export async function retryEmailDelivery(
 
       return {
         success: true,
-        deliveryId: delivery.id,
+        deliveryId: deliveryData.id,
         messageId: result.messageId,
       }
     } else {
       const errorMessage = 'Email send failed without error'
-      await handleEmailFailure(deliveryId, errorMessage, newAttemptCount, delivery.max_attempts)
+      await handleEmailFailure(deliveryId, errorMessage, newAttemptCount, deliveryData.max_attempts)
 
       return {
         success: false,
-        deliveryId: delivery.id,
+        deliveryId: deliveryData.id,
         error: errorMessage,
         errorCode: 'SEND_FAILED',
       }
@@ -366,7 +367,7 @@ export async function retryEmailDelivery(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     const errorCode = getErrorCode(errorMessage)
-    const willRetry = shouldRetry(newAttemptCount, delivery.max_attempts, errorMessage)
+    const willRetry = shouldRetry(newAttemptCount, deliveryData.max_attempts, errorMessage)
 
     if (willRetry && !isPermanentError(errorMessage)) {
       const nextRetryAt = calculateNextRetry(newAttemptCount)
@@ -390,7 +391,7 @@ export async function retryEmailDelivery(
 
     return {
       success: false,
-      deliveryId: delivery.id,
+      deliveryId: deliveryData.id,
       error: errorMessage,
       errorCode,
     }
