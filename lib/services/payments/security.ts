@@ -237,15 +237,17 @@ export async function logPaymentStateChange(
       resourceType: 'payment',
       resourceId: payment.id,
       changes: {
-        from: fromStatus,
-        to: toStatus,
-        reason: reason || null,
+        status: {
+          before: fromStatus,
+          after: toStatus,
+        },
       },
       metadata: {
         organizationId: payment.organizationId || undefined,
         amount: payment.amount,
         amountPaid: payment.amountPaid,
         provider: payment.provider,
+        reason: reason || undefined,
       },
     },
     request
