@@ -51,3 +51,24 @@ export class PaymentError extends AppError {
   }
 }
 
+export class ProfileUpdateError extends AppError {
+  constructor(message: string) {
+    super(message, 400, 'PROFILE_UPDATE_ERROR')
+    this.name = 'ProfileUpdateError'
+  }
+}
+
+export class TicketAccessError extends AppError {
+  constructor(message: string) {
+    super(message, 403, 'TICKET_ACCESS_ERROR')
+    this.name = 'TicketAccessError'
+  }
+}
+
+export class PasswordChangeError extends AppError {
+  constructor(message: string) {
+    super(message, 400, 'PASSWORD_CHANGE_ERROR')
+    this.name = 'PasswordChangeError'
+  }
+}
+

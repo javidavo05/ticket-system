@@ -118,7 +118,7 @@ export default function RegisterPage() {
               />
             </FormField>
 
-            <FormField label="Contraseña" required helperText="Mínimo 8 caracteres">
+            <FormField label="Contraseña" required>
               <Input
                 type="password"
                 placeholder="••••••••"
@@ -127,6 +127,7 @@ export default function RegisterPage() {
                 disabled={loading}
                 required
                 minLength={8}
+                helperText="Mínimo 8 caracteres"
                 autoComplete="new-password"
               />
             </FormField>

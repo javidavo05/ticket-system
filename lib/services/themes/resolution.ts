@@ -6,7 +6,8 @@ import type {
   ThemeResolutionResult,
 } from './domain'
 import { generateThemeCacheKey, generateThemeCacheTags } from './domain'
-import { defaultThemeConfig, type ThemeConfig } from './loader'
+import { defaultThemeConfig } from '@/config/theme-defaults'
+import type { ThemeConfig } from './loader'
 
 /**
  * Get default system theme
