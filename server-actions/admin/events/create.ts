@@ -36,7 +36,7 @@ export async function createEvent(formData: FormData) {
     .single()
 
   if (existing) {
-    throw new ValidationError('Event slug already exists')
+    throw new ValidationError('El slug del evento ya existe')
   }
 
   // Create event
@@ -60,7 +60,7 @@ export async function createEvent(formData: FormData) {
     .single()
 
   if (error || !event) {
-    throw new Error(`Failed to create event: ${error?.message}`)
+    throw new Error(`Error al crear el evento: ${error?.message}`)
   }
 
   // Log audit event

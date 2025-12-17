@@ -24,44 +24,75 @@ class BrevoProvider implements EmailProvider {
     this.apiKey = apiKey
   }
 
-  async send(options: EmailOptions): Promise<{ success: boolean; messageId?: string }> {
+  async send(options: EmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
       const recipients = Array.isArray(options.to) ? options.to : [options.to]
       
-      const response = await fetch(`${this.baseUrl}/smtp/email`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'api-key': this.apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sender: {
-            name: 'Sistema de Venta',
-            email: options.from || process.env.EMAIL_FROM || 'noreply@sistemadeventa.com',
+      // Add timeout to request (30 seconds)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000)
+      
+      try {
+        const response = await fetch(`${this.baseUrl}/smtp/email`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'api-key': this.apiKey,
+            'Content-Type': 'application/json',
           },
-          to: recipients.map(email => ({ email })),
-          subject: options.subject,
-          htmlContent: options.html,
-          textContent: options.text,
-        }),
-      })
+          body: JSON.stringify({
+            sender: {
+              name: 'Sistema de Venta',
+              email: options.from || process.env.EMAIL_FROM || 'noreply@sistemadeventa.com',
+            },
+            to: recipients.map(email => ({ email })),
+            subject: options.subject,
+            htmlContent: options.html,
+            textContent: options.text,
+          }),
+          signal: controller.signal,
+        })
 
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(`Brevo API error: ${error.message || response.statusText}`)
-      }
+        clearTimeout(timeoutId)
 
-      const result = await response.json()
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: response.statusText }))
+          
+          // Detect rate limiting
+          if (response.status === 429) {
+            throw new Error('Rate limit exceeded. Please try again later.')
+          }
+          
+          // Detect permanent errors
+          if (response.status === 400 || response.status === 422) {
+            const errorMessage = errorData.message || errorData.error || response.statusText
+            throw new Error(`Invalid request: ${errorMessage}`)
+          }
+          
+          throw new Error(`Brevo API error: ${errorData.message || response.statusText}`)
+        }
 
-      return {
-        success: true,
-        messageId: result.messageId,
+        const result = await response.json()
+
+        return {
+          success: true,
+          messageId: result.messageId,
+        }
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId)
+        
+        if (fetchError.name === 'AbortError') {
+          throw new Error('Request timeout. The email service may be slow or unavailable.')
+        }
+        
+        throw fetchError
       }
     } catch (error) {
-      console.error('Email send error:', error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      console.error('Email send error:', errorMessage)
       return {
         success: false,
+        error: errorMessage,
       }
     }
   }
@@ -78,7 +109,7 @@ class ResendProvider implements EmailProvider {
     this.client = new Resend(apiKey)
   }
 
-  async send(options: EmailOptions): Promise<{ success: boolean; messageId?: string }> {
+  async send(options: EmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
       const result = await this.client.emails.send({
         from: options.from || process.env.EMAIL_FROM || 'noreply@sistemadeventa.com',
@@ -92,10 +123,29 @@ class ResendProvider implements EmailProvider {
         success: true,
         messageId: result.id,
       }
-    } catch (error) {
-      console.error('Email send error:', error)
+    } catch (error: any) {
+      const errorMessage = error?.message || String(error)
+      console.error('Email send error:', errorMessage)
+      
+      // Detect rate limiting
+      if (errorMessage.includes('rate limit') || errorMessage.includes('429')) {
+        return {
+          success: false,
+          error: 'Rate limit exceeded. Please try again later.',
+        }
+      }
+      
+      // Detect permanent errors
+      if (errorMessage.includes('invalid') || errorMessage.includes('bounced') || errorMessage.includes('blocked')) {
+        return {
+          success: false,
+          error: errorMessage,
+        }
+      }
+      
       return {
         success: false,
+        error: errorMessage,
       }
     }
   }

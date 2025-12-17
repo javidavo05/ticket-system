@@ -1,29 +1,16 @@
 'use client'
 
-import { useState, FormEvent, useEffect } from 'react'
+import { useState, FormEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
-
-// Función helper para guardar logs
-function logToStorage(message: string, data?: any) {
-  const timestamp = new Date().toISOString()
-  const logEntry = `[${timestamp}] ${message}${data ? ' ' + JSON.stringify(data, null, 2) : ''}`
-  console.log(logEntry)
-  
-  // Guardar en localStorage
-  try {
-    const existingLogs = localStorage.getItem('login_logs') || '[]'
-    const logs = JSON.parse(existingLogs)
-    logs.push(logEntry)
-    // Mantener solo los últimos 50 logs
-    if (logs.length > 50) logs.shift()
-    localStorage.setItem('login_logs', JSON.stringify(logs))
-    localStorage.setItem('login_logs_last_update', timestamp)
-  } catch (e) {
-    console.error('Error guardando logs:', e)
-  }
-}
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { FormField, Form } from '@/components/ui/form'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Separator } from '@/components/ui/separator'
+import { AlertCircle } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -32,242 +19,185 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [logs, setLogs] = useState<string[]>([])
-  const [showLogs, setShowLogs] = useState(false)
 
-  const redirectTo = searchParams.get('redirect') || '/admin/dashboard'
+  const redirectTo = searchParams.get('redirect') || '/profile'
 
-  // Cargar logs al montar el componente
-  useEffect(() => {
-    try {
-      const savedLogs = localStorage.getItem('login_logs')
-      if (savedLogs) {
-        setLogs(JSON.parse(savedLogs))
-      }
-    } catch (e) {
-      console.error('Error cargando logs:', e)
-    }
-  }, [])
-
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    logToStorage('🔵 [LOGIN] Iniciando proceso de login...')
+  const handleGoogleLogin = async () => {
     setError(null)
     setLoading(true)
 
     try {
-      logToStorage('🔵 [LOGIN] Creando cliente de Supabase...')
       const supabase = createClient()
-      logToStorage('✅ [LOGIN] Cliente de Supabase creado')
-      
-      logToStorage('🔵 [LOGIN] Intentando iniciar sesión', { email, passwordLength: password.length })
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`,
+        },
+      })
+
+      if (oauthError) {
+        setError(oauthError.message)
+        setLoading(false)
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error al iniciar sesión con Google')
+      setLoading(false)
+    }
+  }
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+
+    try {
+      const supabase = createClient()
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      logToStorage('🔵 [LOGIN] Respuesta de signInWithPassword', { 
-        hasData: !!data, 
-        hasUser: !!data?.user,
-        hasError: !!signInError,
-        errorMessage: signInError?.message 
-      })
-
       if (signInError) {
-        logToStorage('❌ [LOGIN] Error al iniciar sesión', signInError)
         setError(signInError.message)
         setLoading(false)
-        // Actualizar logs en la UI
-        const savedLogs = localStorage.getItem('login_logs')
-        if (savedLogs) setLogs(JSON.parse(savedLogs))
         return
       }
 
       if (!data || !data.user) {
-        logToStorage('❌ [LOGIN] No se recibió data o user')
         setError('Error: No se pudo obtener información del usuario')
         setLoading(false)
-        const savedLogs = localStorage.getItem('login_logs')
-        if (savedLogs) setLogs(JSON.parse(savedLogs))
         return
       }
 
-      logToStorage('✅ [LOGIN] Usuario autenticado', { userId: data.user.id, email: data.user.email })
-
-      // Verificar que la sesión se estableció correctamente
-      logToStorage('🔵 [LOGIN] Verificando sesión...')
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-      
-      logToStorage('🔵 [LOGIN] Resultado de getSession', { 
-        hasSession: !!sessionData?.session,
-        hasError: !!sessionError,
-        errorMessage: sessionError?.message 
-      })
-      
-      if (sessionError) {
-        logToStorage('❌ [LOGIN] Error al obtener sesión', sessionError)
-        setError('Error: No se pudo verificar la sesión')
-        setLoading(false)
-        const savedLogs = localStorage.getItem('login_logs')
-        if (savedLogs) setLogs(JSON.parse(savedLogs))
-        return
-      }
-
-      if (!sessionData?.session) {
-        logToStorage('❌ [LOGIN] La sesión no se estableció correctamente')
-        setError('Error: La sesión no se estableció correctamente')
-        setLoading(false)
-        const savedLogs = localStorage.getItem('login_logs')
-        if (savedLogs) setLogs(JSON.parse(savedLogs))
-        return
-      }
-
-      logToStorage('✅ [LOGIN] Sesión verificada correctamente')
-      
-      // Verificar cookies antes de redirigir
-      const cookies = document.cookie
-      logToStorage('🔵 [LOGIN] Cookies del navegador:', { cookies: cookies.split(';').map(c => c.trim().split('=')[0]) })
-      
-      logToStorage('🔵 [LOGIN] Redirigiendo a', { redirectTo })
-
-      // Esperar un momento para que las cookies se establezcan completamente
-      logToStorage('⏳ [LOGIN] Esperando 1 segundo antes de redirigir...')
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      logToStorage('🔵 [LOGIN] Ejecutando redirección...')
-      // Usar window.location para hacer un refresh completo y asegurar que las cookies se lean
+      // Wait a moment for cookies to be set
+      await new Promise((resolve) => setTimeout(resolve, 500))
       window.location.href = redirectTo
     } catch (err: any) {
-      logToStorage('❌ [LOGIN] Error inesperado', { message: err.message, stack: err.stack })
       setError(err.message || 'Error al iniciar sesión')
       setLoading(false)
-      const savedLogs = localStorage.getItem('login_logs')
-      if (savedLogs) setLogs(JSON.parse(savedLogs))
     }
   }
 
-  const clearLogs = () => {
-    localStorage.removeItem('login_logs')
-    localStorage.removeItem('login_logs_last_update')
-    setLogs([])
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-3xl font-bold text-center">
             Iniciar Sesión
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Accede al panel de administración
-          </p>
-        </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
-                    {error}
-                  </h3>
-                </div>
-              </div>
-            </div>
-          )}
+          </CardTitle>
+          <CardDescription className="text-center">
+            Accede a tu cuenta para continuar
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <Alert variant="error">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
+            <FormField label="Email" required>
+              <Input
                 type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email"
+                placeholder="tu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Contraseña
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Contraseña"
+                autoComplete="email"
+              />
+            </FormField>
+
+            <FormField label="Contraseña" required>
+              <Input
+                type="password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
+                required
+                autoComplete="current-password"
               />
-            </div>
-          </div>
+            </FormField>
 
-          <div>
-            <button
+            <div className="flex items-center justify-between text-sm">
+              <Link
+                href="/forgot-password"
+                className="text-primary-600 dark:text-primary-500 hover:underline"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
+
+            <Button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              loading={loading}
+              className="w-full"
+              size="lg"
             >
-              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-            </button>
-          </div>
+              Iniciar Sesión
+            </Button>
 
-          <div className="text-center space-y-2">
-            <Link
-              href="/"
-              className="text-sm text-indigo-600 hover:text-indigo-500"
+            <div className="relative">
+              <Separator />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="bg-white dark:bg-gray-900 px-2 text-sm text-gray-500 dark:text-gray-400">
+                  O continúa con
+                </span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              variant="outline"
+              className="w-full"
             >
-              Volver al inicio
-            </Link>
-            <div className="flex justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  const savedLogs = localStorage.getItem('login_logs')
-                  if (savedLogs) setLogs(JSON.parse(savedLogs))
-                  setShowLogs(!showLogs)
-                }}
-                className="text-xs text-gray-500 hover:text-gray-700 underline"
-              >
-                {showLogs ? 'Ocultar' : 'Ver'} Logs de Debug
-              </button>
-              {logs.length > 0 && (
-                <button
-                  type="button"
-                  onClick={clearLogs}
-                  className="text-xs text-red-500 hover:text-red-700 underline"
+              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+              Continuar con Google
+            </Button>
+
+            <div className="text-center text-sm space-y-1">
+              <p className="text-gray-600 dark:text-gray-400">
+                ¿No tienes cuenta?{' '}
+                <Link
+                  href="/register"
+                  className="text-primary-600 dark:text-primary-500 hover:underline font-medium"
                 >
-                  Limpiar Logs
-                </button>
-              )}
+                  Regístrate
+                </Link>
+              </p>
+              <Link
+                href="/"
+                className="text-gray-500 dark:text-gray-400 hover:underline text-xs"
+              >
+                Volver al inicio
+              </Link>
             </div>
-          </div>
-        </form>
-
-        {showLogs && logs.length > 0 && (
-          <div className="mt-8 p-4 bg-gray-900 text-green-400 rounded-lg max-h-96 overflow-y-auto">
-            <div className="text-xs font-mono space-y-1">
-              <div className="text-white mb-2 font-bold">Logs de Debug (últimos {logs.length}):</div>
-              {logs.map((log, index) => (
-                <div key={index} className="text-xs">{log}</div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   )
 }
-

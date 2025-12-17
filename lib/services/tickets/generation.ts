@@ -2,6 +2,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server'
 import { signQRCode } from '@/lib/security/crypto'
 import { TICKET_STATUS } from '@/lib/utils/constants'
 import { randomBytes } from 'crypto'
+import { verifyQRCode } from '@/lib/security/crypto'
 
 export interface TicketGenerationParams {
   ticketTypeId: string
@@ -18,32 +19,37 @@ export interface TicketGenerationParams {
 export async function generateTicket(params: TicketGenerationParams): Promise<string> {
   const supabase = await createServiceRoleClient()
 
+  // Get event to obtain organizationId
+  const { data: event, error: eventError } = await supabase
+    .from('events')
+    .select('organization_id')
+    .eq('id', params.eventId)
+    .single()
+
+  if (eventError || !event) {
+    throw new Error(`Failed to fetch event: ${eventError?.message}`)
+  }
+
   // Generate unique ticket number
   const ticketNumber = generateTicketNumber()
 
-  // Create QR code signature
-  const qrPayload = {
-    ticketId: '', // Will be set after ticket creation
-    eventId: params.eventId,
-    ticketNumber,
-  }
+  // Create ticket record first (we need the ticket ID for the QR payload)
+  // Use ISSUED status for new tickets (will transition to PAID after payment)
+  const initialStatus = params.paymentId ? TICKET_STATUS.PAID : TICKET_STATUS.ISSUED
 
-  // Sign QR code (ticketId will be updated after creation)
-  const qrSignature = await signQRCode(qrPayload as any)
-
-  // Create ticket record
   const { data: ticket, error } = await supabase
     .from('tickets')
     .insert({
       ticket_number: ticketNumber,
       ticket_type_id: params.ticketTypeId,
       event_id: params.eventId,
+      organization_id: event.organization_id,
       purchaser_id: params.purchaserId || null,
       purchaser_email: params.purchaserEmail,
       purchaser_name: params.purchaserName,
-      qr_signature: qrSignature,
-      qr_payload: qrPayload,
-      status: params.paymentId ? TICKET_STATUS.PAID : TICKET_STATUS.PENDING_PAYMENT,
+      qr_signature: '', // Will be set after QR generation
+      qr_payload: {}, // Will be set after QR generation
+      status: initialStatus,
       payment_id: params.paymentId || null,
       promoter_id: params.promoterId || null,
       assigned_to_email: params.assignedToEmail || null,
@@ -56,23 +62,50 @@ export async function generateTicket(params: TicketGenerationParams): Promise<st
     throw new Error(`Failed to create ticket: ${error?.message}`)
   }
 
-  // Update QR signature with actual ticket ID
-  const updatedQrPayload = {
+  // Create QR payload with all required fields
+  const qrPayload = {
     ticketId: ticket.id,
     eventId: params.eventId,
     ticketNumber,
+    organizationId: event.organization_id || undefined,
+    ticketTypeId: params.ticketTypeId,
   }
 
-  const updatedQrSignature = await signQRCode(updatedQrPayload as any)
+  // Sign QR code
+  const qrSignature = await signQRCode(qrPayload)
 
-  // Update ticket with correct QR signature
-  await supabase
+  // Extract nonce from the signed QR (we need to verify it to get the nonce)
+  let nonce: string
+  try {
+    const verified = await verifyQRCode(qrSignature)
+    nonce = verified.nonce
+  } catch (error) {
+    throw new Error(`Failed to extract nonce from QR signature: ${error}`)
+  }
+
+  // Update ticket with QR signature and payload
+  const { error: updateError } = await supabase
     .from('tickets')
     .update({
-      qr_signature: updatedQrSignature,
-      qr_payload: updatedQrPayload,
+      qr_signature: qrSignature,
+      qr_payload: qrPayload,
     })
     .eq('id', ticket.id)
+
+  if (updateError) {
+    throw new Error(`Failed to update ticket QR: ${updateError.message}`)
+  }
+
+  // Store nonce in ticket_nonces table for replay prevention
+  const { error: nonceError } = await supabase.from('ticket_nonces').insert({
+    ticket_id: ticket.id,
+    nonce: nonce,
+  })
+
+  if (nonceError) {
+    // Non-critical error, log but don't fail ticket creation
+    console.error(`Failed to store nonce for ticket ${ticket.id}:`, nonceError)
+  }
 
   return ticket.id
 }
@@ -97,5 +130,15 @@ export async function generateTickets(
   }
 
   return ticketIds
+}
+
+/**
+ * Issue a ticket (create in ISSUED state, before payment)
+ * This is useful for free tickets or tickets that will be paid later
+ */
+export async function issueTicket(params: TicketGenerationParams): Promise<string> {
+  // Ensure no payment ID is set for issued tickets
+  const issueParams = { ...params, paymentId: undefined }
+  return generateTicket(issueParams)
 }
 

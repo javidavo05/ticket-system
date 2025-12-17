@@ -2,9 +2,45 @@ import { createServiceRoleClient } from './server'
 import { ROLES } from '@/lib/utils/constants'
 
 /**
+ * Get user's organization ID
+ */
+export async function getUserOrganizationId(userId: string): Promise<string | null> {
+  const supabase = await createServiceRoleClient()
+  
+  const { data, error } = await supabase
+    .from('users')
+    .select('organization_id')
+    .eq('id', userId)
+    .is('deleted_at', null)
+    .single()
+
+  if (error || !data) {
+    return null
+  }
+
+  return data.organization_id
+}
+
+/**
+ * Check if user belongs to organization
+ */
+export async function userBelongsToOrganization(
+  userId: string,
+  organizationId: string
+): Promise<boolean> {
+  const userOrgId = await getUserOrganizationId(userId)
+  return userOrgId === organizationId
+}
+
+/**
  * Helper to check if user has a specific role
  */
-export async function hasRole(userId: string, role: string, eventId?: string): Promise<boolean> {
+export async function hasRole(
+  userId: string,
+  role: string,
+  eventId?: string,
+  organizationId?: string
+): Promise<boolean> {
   const supabase = await createServiceRoleClient()
   
   let query = supabase
@@ -18,6 +54,11 @@ export async function hasRole(userId: string, role: string, eventId?: string): P
     query = query.or(`event_id.eq.${eventId},event_id.is.null`)
   } else {
     query = query.is('event_id', null)
+  }
+
+  // Filter by organization if provided
+  if (organizationId) {
+    query = query.eq('organization_id', organizationId)
   }
 
   const { data, error } = await query
@@ -40,8 +81,35 @@ export async function isSuperAdmin(userId: string): Promise<boolean> {
 /**
  * Check if user is event admin for a specific event
  */
-export async function isEventAdmin(userId: string, eventId: string): Promise<boolean> {
-  return hasRole(userId, ROLES.EVENT_ADMIN, eventId) || isSuperAdmin(userId)
+export async function isEventAdmin(
+  userId: string,
+  eventId: string,
+  organizationId?: string
+): Promise<boolean> {
+  return (
+    hasRole(userId, ROLES.EVENT_ADMIN, eventId, organizationId) ||
+    isSuperAdmin(userId)
+  )
+}
+
+/**
+ * Verify user has access to organization resource
+ */
+export async function verifyOrganizationAccess(
+  userId: string,
+  resourceOrganizationId: string | null
+): Promise<boolean> {
+  if (!resourceOrganizationId) {
+    // Allow access to resources without organization (backward compatibility)
+    return true
+  }
+
+  const userOrgId = await getUserOrganizationId(userId)
+  if (!userOrgId) {
+    return false
+  }
+
+  return userOrgId === resourceOrganizationId || (await isSuperAdmin(userId))
 }
 
 /**

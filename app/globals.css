@@ -2,16 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --color-primary: #000000;
-  --color-secondary: #666666;
-  --color-accent: #FFD700;
-  --color-background: #FFFFFF;
-  --color-text: #000000;
-}
-
-body {
-  color: var(--color-text);
-  background: var(--color-background);
+@layer base {
+  /* Base styles will be applied via ThemeProvider CSS variables */
+  /* Theme variables are injected dynamically by ThemeProvider */
+  
+  html {
+    @apply antialiased;
+  }
+  
+  body {
+    @apply bg-background-default text-text-default;
+    transition: background-color 150ms ease-in-out, color 150ms ease-in-out;
+  }
+  
+  /* Smooth transitions for dark mode */
+  * {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+  
+  /* Focus styles */
+  :focus-visible {
+    @apply outline-none ring-2 ring-offset-2 ring-primary-500;
+  }
 }
 

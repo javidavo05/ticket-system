@@ -1,5 +1,8 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { NotFoundError, ValidationError } from '@/lib/utils/errors'
+import { generateSecurityToken } from '../nfc/tokens'
+import { validateNFCRequest } from '../nfc/validation'
+import { endUsageSession } from '../nfc/anti-cloning'
 
 export interface NFCBand {
   id: string
@@ -50,6 +53,23 @@ export async function registerBand(
     throw new Error(`Failed to register NFC band: ${error?.message}`)
   }
 
+  // Generate security token
+  try {
+    await generateSecurityToken(band.id)
+  } catch (tokenError) {
+    // Non-critical, log but continue
+    console.error('Failed to generate security token:', tokenError)
+  }
+
+  // Initialize rate limit
+  await supabase.from('nfc_rate_limits').insert({
+    nfc_band_id: band.id,
+    window_start: new Date().toISOString(),
+    request_count: 0,
+    max_requests: 10,
+    window_duration_seconds: 60,
+  })
+
   return band.id
 }
 
@@ -72,13 +92,14 @@ export async function bindBandToUser(bandUid: string, userId: string): Promise<v
 export async function validateBandAccess(
   bandUid: string,
   eventId: string,
-  zoneId?: string
-): Promise<{ valid: boolean; userId?: string; reason?: string }> {
+  zoneId?: string,
+  location?: { lat: number; lng: number }
+): Promise<{ valid: boolean; userId?: string; reason?: string; alerts?: string[] }> {
   const supabase = await createServiceRoleClient()
 
   const { data: band, error } = await supabase
     .from('nfc_bands')
-    .select('user_id, status, event_id')
+    .select('id, user_id, status, event_id')
     .eq('band_uid', bandUid)
     .single()
 
@@ -89,48 +110,25 @@ export async function validateBandAccess(
     }
   }
 
-  if (band.status !== 'active') {
-    return {
-      valid: false,
-      userId: band.user_id,
-      reason: `NFC band is ${band.status}`,
-    }
-  }
-
-  // Check event access
-  if (band.event_id && band.event_id !== eventId) {
-    return {
-      valid: false,
-      userId: band.user_id,
-      reason: 'NFC band not valid for this event',
-    }
-  }
-
-  // Update last used timestamp
-  await supabase
-    .from('nfc_bands')
-    .update({
-      last_used_at: new Date().toISOString(),
-    })
-    .eq('id', band.id)
-
-  return {
-    valid: true,
-    userId: band.user_id,
-  }
+  // Use new validation service if available
+  const { validateBandAccess: validateAccess } = await import('../nfc/validation')
+  return validateAccess(band.id, eventId, zoneId, location)
 }
 
 export async function processNFCPayment(
   bandUid: string,
   amount: number,
-  eventId: string
-): Promise<void> {
+  eventId: string,
+  token?: string,
+  nonce?: string,
+  location?: { lat: number; lng: number }
+): Promise<{ transactionId: string; newBalance: number }> {
   const supabase = await createServiceRoleClient()
 
   // Get band
   const { data: band, error: bandError } = await supabase
     .from('nfc_bands')
-    .select('user_id, status')
+    .select('id, user_id, status')
     .eq('band_uid', bandUid)
     .single()
 
@@ -142,23 +140,63 @@ export async function processNFCPayment(
     throw new ValidationError(`NFC band is ${band.status}`)
   }
 
-  // Deduct from wallet
+  // If token and nonce provided, validate them
+  if (token && nonce) {
+    const validation = await validateNFCRequest(token, nonce, eventId, undefined, location)
+    if (!validation.valid) {
+      throw new ValidationError(validation.reason || 'NFC validation failed')
+    }
+  }
+
+  // Generate nonce if not provided
+  const finalNonce = nonce || crypto.randomUUID()
+
+  // Deduct from wallet with idempotency
   const { deductBalance } = await import('./balance')
-  await deductBalance(band.user_id, amount, {
-    type: 'purchase',
-    id: crypto.randomUUID(),
-    description: `NFC payment for event ${eventId}`,
-    eventId,
-  })
+  const result = await deductBalance(
+    band.user_id,
+    amount,
+    {
+      type: 'purchase',
+      id: crypto.randomUUID(),
+      description: `NFC payment for event ${eventId}`,
+      eventId,
+    },
+    `nfc_payment_${band.id}_${finalNonce}`
+  )
 
   // Record NFC transaction
-  await supabase.from('nfc_transactions').insert({
-    nfc_band_id: band.id,
-    user_id: band.user_id,
-    event_id: eventId,
-    transaction_type: 'payment',
-    amount: amount.toFixed(2),
-  })
+  const { data: transaction, error: txError } = await supabase
+    .from('nfc_transactions')
+    .insert({
+      nfc_band_id: band.id,
+      user_id: band.user_id,
+      event_id: eventId,
+      transaction_type: 'payment',
+      amount: amount.toFixed(2),
+    })
+    .select('id')
+    .single()
+
+  if (txError || !transaction) {
+    throw new Error(`Failed to record NFC transaction: ${txError?.message}`)
+  }
+
+  // Link nonce to transaction if nonce was used
+  if (nonce) {
+    await supabase
+      .from('nfc_nonces')
+      .update({
+        transaction_id: transaction.id,
+      })
+      .eq('nfc_band_id', band.id)
+      .eq('nonce', nonce)
+  }
+
+  return {
+    transactionId: transaction.id,
+    newBalance: result.newBalance,
+  }
 }
 
 export async function getBandsByUser(userId: string): Promise<NFCBand[]> {

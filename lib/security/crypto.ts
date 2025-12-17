@@ -9,6 +9,8 @@ export interface QRPayload {
   ticketId: string
   eventId: string
   ticketNumber: string
+  organizationId?: string // Optional for backward compatibility
+  ticketTypeId?: string // Optional for backward compatibility
   issuedAt: number
   nonce: string
 }
@@ -16,15 +18,29 @@ export interface QRPayload {
 /**
  * Sign QR code payload with JWT
  */
-export async function signQRCode(payload: Omit<QRPayload, 'issuedAt' | 'nonce'>): Promise<string> {
+export async function signQRCode(
+  payload: Omit<QRPayload, 'issuedAt' | 'nonce'>
+): Promise<string> {
   const now = Math.floor(Date.now() / 1000)
   const nonce = crypto.randomUUID()
 
-  const jwt = await new SignJWT({
-    ...payload,
+  const jwtPayload: Record<string, any> = {
+    ticketId: payload.ticketId,
+    eventId: payload.eventId,
+    ticketNumber: payload.ticketNumber,
     issuedAt: now,
     nonce,
-  })
+  }
+
+  // Add optional fields if present
+  if (payload.organizationId) {
+    jwtPayload.organizationId = payload.organizationId
+  }
+  if (payload.ticketTypeId) {
+    jwtPayload.ticketTypeId = payload.ticketTypeId
+  }
+
+  const jwt = await new SignJWT(jwtPayload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt(now)
     .setExpirationTime(now + QR_CODE_EXPIRY_HOURS * 3600)
@@ -40,13 +56,23 @@ export async function verifyQRCode(signature: string): Promise<QRPayload> {
   try {
     const { payload } = await jwtVerify(signature, JWT_SECRET)
     
-    return {
+    const qrPayload: QRPayload = {
       ticketId: payload.ticketId as string,
       eventId: payload.eventId as string,
       ticketNumber: payload.ticketNumber as string,
       issuedAt: payload.issuedAt as number,
       nonce: payload.nonce as string,
     }
+
+    // Add optional fields if present (for backward compatibility)
+    if (payload.organizationId) {
+      qrPayload.organizationId = payload.organizationId as string
+    }
+    if (payload.ticketTypeId) {
+      qrPayload.ticketTypeId = payload.ticketTypeId as string
+    }
+
+    return qrPayload
   } catch (error) {
     throw new Error('Invalid QR code signature')
   }

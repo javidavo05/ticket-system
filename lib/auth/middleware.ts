@@ -13,6 +13,11 @@ export async function authMiddleware(request: NextRequest) {
     return NextResponse.next({ request })
   }
 
+  // Detect subdomain
+  const hostname = request.headers.get('host') || ''
+  const subdomain = hostname.split('.')[0]
+  const isSuperSubdomain = subdomain === 'super'
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient<Database>(
@@ -23,7 +28,7 @@ export async function authMiddleware(request: NextRequest) {
         getAll() {
           const cookies = request.cookies.getAll()
           // Log para debugging
-          if (pathname.startsWith('/admin') || pathname.startsWith('/dashboard')) {
+          if (pathname.startsWith('/admin') || pathname.startsWith('/dashboard') || pathname.startsWith('/super')) {
             console.log('🔵 [MIDDLEWARE] getAll() llamado, cookies encontradas:', cookies.length)
             // Verificar si la cookie de auth tiene el formato correcto
             const authCookie = cookies.find(c => c.name.includes('auth-token'))
@@ -40,31 +45,91 @@ export async function authMiddleware(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           // Log para debugging
-          if (pathname.startsWith('/admin') || pathname.startsWith('/dashboard')) {
+          if (pathname.startsWith('/admin') || pathname.startsWith('/dashboard') || pathname.startsWith('/super')) {
             console.log('🔵 [MIDDLEWARE] setAll() llamado con', cookiesToSet.length, 'cookies')
           }
-          cookiesToSet.forEach(({ name, value, options }) => {
+          // Actualizar cookies en el request
+          cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value)
-            // Asegurar que las opciones de las cookies sean correctas
-            const cookieOptions = {
+          })
+          // Recrear la respuesta con las cookies actualizadas
+          supabaseResponse = NextResponse.next({ request })
+          // Aplicar todas las cookies a la respuesta
+          cookiesToSet.forEach(({ name, value, options }) => {
+            supabaseResponse.cookies.set(name, value, {
               ...options,
               path: options?.path || '/',
               sameSite: options?.sameSite || 'lax',
               httpOnly: options?.httpOnly ?? false,
-            }
-            supabaseResponse = NextResponse.next({ request })
-            supabaseResponse.cookies.set(name, value, cookieOptions)
+            })
           })
         },
       },
     }
   )
 
+  // Super admin routes - subdomain detection and role validation
+  if (isSuperSubdomain || pathname.startsWith('/super')) {
+    console.log('\n🔴 [SUPER MIDDLEWARE] ==========================================')
+    console.log('🔴 [SUPER MIDDLEWARE] Super admin route detected:', pathname)
+    console.log('🔴 [SUPER MIDDLEWARE] Subdomain:', subdomain)
+    console.log('🔴 [SUPER MIDDLEWARE] Hostname:', hostname)
+
+    // Get user session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    
+    if (sessionError) {
+      console.log('❌ [SUPER MIDDLEWARE] Error al obtener sesión:', sessionError.message)
+    }
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    
+    if (userError) {
+      console.log('❌ [SUPER MIDDLEWARE] Error al obtener usuario:', userError.message)
+    }
+
+    console.log('🔴 [SUPER MIDDLEWARE] Usuario:', user ? { id: user.id, email: user.email } : 'null')
+
+    if (!user) {
+      console.log('❌ [SUPER MIDDLEWARE] No hay usuario, redirigiendo a super login')
+      const url = request.nextUrl.clone()
+      url.pathname = '/super/login'
+      url.searchParams.set('redirect', pathname)
+      console.log('🔴 [SUPER MIDDLEWARE] ==========================================\n')
+      return NextResponse.redirect(url)
+    }
+
+    // Validate super_admin role
+    console.log('🔴 [SUPER MIDDLEWARE] Verificando rol super_admin para usuario:', user.id)
+    const isSuper = await isSuperAdmin(user.id)
+    console.log('🔴 [SUPER MIDDLEWARE] Es super_admin?', isSuper)
+
+    if (!isSuper) {
+      console.log('❌ [SUPER MIDDLEWARE] Acceso denegado - usuario no es super_admin')
+      console.log('🔴 [SUPER MIDDLEWARE] Redirigiendo a home')
+      console.log('🔴 [SUPER MIDDLEWARE] ==========================================\n')
+      // Log access attempt
+      // TODO: Add audit logging for denied access
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+
+    // If subdomain is 'super' but pathname doesn't start with /super, rewrite to /super
+    if (isSuperSubdomain && !pathname.startsWith('/super')) {
+      const url = request.nextUrl.clone()
+      url.pathname = `/super${pathname === '/' ? '' : pathname}`
+      console.log('🔴 [SUPER MIDDLEWARE] Rewriting to:', url.pathname)
+      console.log('✅ [SUPER MIDDLEWARE] Acceso permitido - super_admin verificado')
+      console.log('🔴 [SUPER MIDDLEWARE] ==========================================\n')
+      return NextResponse.rewrite(url)
+    }
+
+    console.log('✅ [SUPER MIDDLEWARE] Acceso permitido - super_admin verificado')
+    console.log('🔴 [SUPER MIDDLEWARE] ==========================================\n')
+    return supabaseResponse
+  }
+
   // Admin routes require authentication - verificar primero
   if (pathname.startsWith('/admin') || pathname.startsWith('/dashboard')) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/auth/middleware.ts:64',message:'Admin route check',data:{pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
     console.log('\n🔵 [MIDDLEWARE] ==========================================')
     console.log('🔵 [MIDDLEWARE] Verificando acceso a ruta admin:', pathname)
     console.log('🔵 [MIDDLEWARE] URL completa:', request.url)
@@ -115,38 +180,39 @@ export async function authMiddleware(request: NextRequest) {
     }
     
     console.log('🔵 [MIDDLEWARE] Usuario obtenido:', user ? { id: user.id, email: user.email } : 'null')
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/auth/middleware.ts:87',message:'User check result',data:{hasUser:!!user,userId:user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
 
     if (!user) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/auth/middleware.ts:90',message:'Middleware redirecting to login',data:{pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
-      console.log('❌ [MIDDLEWARE] No hay usuario, redirigiendo a login')
+      console.log('❌ [MIDDLEWARE] No hay usuario, redirigiendo a admin login')
       const url = request.nextUrl.clone()
-      url.pathname = '/login'
+      url.pathname = '/admin/login'
       url.searchParams.set('redirect', pathname)
       console.log('🔵 [MIDDLEWARE] Redirigiendo a:', url.toString())
       console.log('🔵 [MIDDLEWARE] ==========================================\n')
       return NextResponse.redirect(url)
     }
 
-    // Verificar si es super admin
-    console.log('🔵 [MIDDLEWARE] Verificando rol super_admin para usuario:', user.id)
-    const adminCheck = await isSuperAdmin(user.id)
-    console.log('🔵 [MIDDLEWARE] Es super_admin?', adminCheck)
+    // Verificar si tiene algún rol de admin (no solo super_admin)
+    // Admin panel es para: event_admin, accounting, scanner, promoter, super_admin
+    const { hasRole } = await import('@/lib/supabase/rls')
+    const { ROLES } = await import('@/lib/utils/constants')
+    
+    console.log('🔵 [MIDDLEWARE] Verificando roles de admin para usuario:', user.id)
+    const isSuper = await isSuperAdmin(user.id)
+    const isEventAdmin = await hasRole(user.id, ROLES.EVENT_ADMIN)
+    const isAccounting = await hasRole(user.id, ROLES.ACCOUNTING)
+    const isScanner = await hasRole(user.id, ROLES.SCANNER)
+    const isPromoter = await hasRole(user.id, ROLES.PROMOTER)
+    
+    const hasAdminRole = isSuper || isEventAdmin || isAccounting || isScanner || isPromoter
+    console.log('🔵 [MIDDLEWARE] Roles:', { isSuper, isEventAdmin, isAccounting, isScanner, isPromoter })
 
-    if (!adminCheck) {
-      console.log('❌ [MIDDLEWARE] Usuario no es super_admin, redirigiendo a home')
+    if (!hasAdminRole) {
+      console.log('❌ [MIDDLEWARE] Usuario no tiene rol de admin, redirigiendo a home')
       console.log('🔵 [MIDDLEWARE] ==========================================\n')
       return NextResponse.redirect(new URL('/', request.url))
     }
 
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/auth/middleware.ts:112',message:'Middleware allowing access',data:{userId:user.id,isAdmin:adminCheck},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
-    console.log('✅ [MIDDLEWARE] Usuario autenticado y es super_admin, permitiendo acceso')
+    console.log('✅ [MIDDLEWARE] Usuario autenticado con rol de admin, permitiendo acceso')
     console.log('🔵 [MIDDLEWARE] ==========================================\n')
     return supabaseResponse
   }

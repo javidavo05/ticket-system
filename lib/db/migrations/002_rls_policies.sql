@@ -121,6 +121,18 @@ CREATE POLICY "Scanners can view tickets for their assigned events"
     )
   );
 
+-- Promoters can view tickets for their events
+CREATE POLICY "Promoters can view tickets for their events"
+  ON tickets FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_roles.event_id = tickets.event_id
+        AND user_roles.user_id = auth.uid()
+        AND user_roles.role = 'promoter'::user_role
+    )
+  );
+
 CREATE POLICY "Authenticated users can create tickets"
   ON tickets FOR INSERT
   WITH CHECK (auth.uid() IS NOT NULL);
@@ -136,6 +148,7 @@ CREATE POLICY "Scanners can insert scans for their assigned events"
         AND user_roles.user_id = auth.uid()
         AND user_roles.role = 'scanner'::user_role
     )
+    OR is_super_admin(auth.uid())
   );
 
 CREATE POLICY "Event admins can view scans for their events"
@@ -149,6 +162,32 @@ CREATE POLICY "Event admins can view scans for their events"
         AND user_roles.role = 'event_admin'::user_role
     )
     OR is_super_admin(auth.uid())
+  );
+
+-- Scanners can view scans they created
+CREATE POLICY "Scanners can view their own scans"
+  ON ticket_scans FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM tickets
+      JOIN user_roles ON user_roles.event_id = tickets.event_id
+      WHERE tickets.id = ticket_scans.ticket_id
+        AND user_roles.user_id = auth.uid()
+        AND user_roles.role = 'scanner'::user_role
+    )
+  );
+
+-- Promoters can view scans for their events
+CREATE POLICY "Promoters can view scans for their events"
+  ON ticket_scans FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM tickets
+      JOIN user_roles ON user_roles.event_id = tickets.event_id
+      WHERE tickets.id = ticket_scans.ticket_id
+        AND user_roles.user_id = auth.uid()
+        AND user_roles.role = 'promoter'::user_role
+    )
   );
 
 CREATE POLICY "Users can view scans for their own tickets"
@@ -180,6 +219,71 @@ CREATE POLICY "Event admins can view payments for their events"
     OR is_super_admin(auth.uid())
   );
 
+-- Accounting role can view all payments
+CREATE POLICY "Accounting can view all payments"
+  ON payments FOR SELECT
+  USING (
+    user_has_role(auth.uid(), 'accounting')
+    OR is_super_admin(auth.uid())
+  );
+
+-- Promoters can view payments for their events
+CREATE POLICY "Promoters can view payments for their events"
+  ON payments FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM payment_items
+      JOIN tickets ON payment_items.ticket_id = tickets.id
+      JOIN user_roles ON user_roles.event_id = tickets.event_id
+      WHERE payment_items.payment_id = payments.id
+        AND user_roles.user_id = auth.uid()
+        AND user_roles.role = 'promoter'::user_role
+    )
+  );
+
+-- Payment items policies
+CREATE POLICY "Users can view their own payment items"
+  ON payment_items FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM payments
+      WHERE payments.id = payment_items.payment_id
+        AND payments.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Accounting can view all payment items"
+  ON payment_items FOR SELECT
+  USING (
+    user_has_role(auth.uid(), 'accounting')
+    OR is_super_admin(auth.uid())
+  );
+
+CREATE POLICY "Event admins can view payment items for their events"
+  ON payment_items FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM tickets
+      JOIN user_roles ON user_roles.event_id = tickets.event_id
+      WHERE tickets.id = payment_items.ticket_id
+        AND user_roles.user_id = auth.uid()
+        AND user_roles.role = 'event_admin'::user_role
+    )
+    OR is_super_admin(auth.uid())
+  );
+
+CREATE POLICY "Promoters can view payment items for their events"
+  ON payment_items FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM tickets
+      JOIN user_roles ON user_roles.event_id = tickets.event_id
+      WHERE tickets.id = payment_items.ticket_id
+        AND user_roles.user_id = auth.uid()
+        AND user_roles.role = 'promoter'::user_role
+    )
+  );
+
 -- Wallets policies
 CREATE POLICY "Users can view their own wallet"
   ON wallets FOR SELECT
@@ -207,6 +311,122 @@ CREATE POLICY "Event admins can view NFC bands for their events"
     OR is_super_admin(auth.uid())
   );
 
+-- User roles policies
+CREATE POLICY "Users can view their own roles"
+  ON user_roles FOR SELECT
+  USING (user_id = auth.uid());
+
+CREATE POLICY "Super admins can view all roles"
+  ON user_roles FOR SELECT
+  USING (is_super_admin(auth.uid()));
+
+CREATE POLICY "Event admins can view roles for their events"
+  ON user_roles FOR SELECT
+  USING (
+    event_id IS NULL
+    OR EXISTS (
+      SELECT 1 FROM user_roles ur
+      WHERE ur.event_id = user_roles.event_id
+        AND ur.user_id = auth.uid()
+        AND ur.role = 'event_admin'::user_role
+    )
+    OR is_super_admin(auth.uid())
+  );
+
+-- Ticket types policies
+CREATE POLICY "Public can view ticket types for published events"
+  ON ticket_types FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM events
+      WHERE events.id = ticket_types.event_id
+        AND events.status IN ('published', 'live')
+        AND events.deleted_at IS NULL
+    )
+  );
+
+CREATE POLICY "Event admins can manage ticket types for their events"
+  ON ticket_types FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_roles.event_id = ticket_types.event_id
+        AND user_roles.user_id = auth.uid()
+        AND user_roles.role = 'event_admin'::user_role
+    )
+    OR is_super_admin(auth.uid())
+  );
+
+-- Discounts policies
+CREATE POLICY "Public can view active discounts for published events"
+  ON discounts FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM events
+      WHERE events.id = discounts.event_id
+        AND events.status IN ('published', 'live')
+        AND events.deleted_at IS NULL
+    )
+    AND (discounts.valid_from IS NULL OR discounts.valid_from <= NOW())
+    AND (discounts.valid_until IS NULL OR discounts.valid_until >= NOW())
+  );
+
+CREATE POLICY "Event admins can manage discounts for their events"
+  ON discounts FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_roles.event_id = discounts.event_id
+        AND user_roles.user_id = auth.uid()
+        AND user_roles.role = 'event_admin'::user_role
+    )
+    OR is_super_admin(auth.uid())
+  );
+
+-- Event expenses policies
+CREATE POLICY "Event admins can view expenses for their events"
+  ON event_expenses FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_roles.event_id = event_expenses.event_id
+        AND user_roles.user_id = auth.uid()
+        AND user_roles.role = 'event_admin'::user_role
+    )
+    OR is_super_admin(auth.uid())
+  );
+
+CREATE POLICY "Accounting can view all event expenses"
+  ON event_expenses FOR SELECT
+  USING (
+    user_has_role(auth.uid(), 'accounting')
+    OR is_super_admin(auth.uid())
+  );
+
+-- NFC transactions policies
+CREATE POLICY "Users can view their own NFC transactions"
+  ON nfc_transactions FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM nfc_bands
+      WHERE nfc_bands.id = nfc_transactions.nfc_band_id
+        AND nfc_bands.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Event admins can view NFC transactions for their events"
+  ON nfc_transactions FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM nfc_bands
+      JOIN user_roles ON user_roles.event_id = nfc_bands.event_id
+      WHERE nfc_bands.id = nfc_transactions.nfc_band_id
+        AND user_roles.user_id = auth.uid()
+        AND user_roles.role = 'event_admin'::user_role
+    )
+    OR is_super_admin(auth.uid())
+  );
+
 -- Audit logs policies
 CREATE POLICY "Only admins can view audit logs"
   ON audit_logs FOR SELECT
@@ -217,6 +437,13 @@ CREATE POLICY "Only admins can view audit logs"
       WHERE user_roles.user_id = auth.uid()
         AND user_roles.role IN ('super_admin'::user_role, 'event_admin'::user_role)
     )
+  );
+
+CREATE POLICY "Accounting can view audit logs"
+  ON audit_logs FOR SELECT
+  USING (
+    user_has_role(auth.uid(), 'accounting')
+    OR is_super_admin(auth.uid())
   );
 
 -- Note: Service role key should be used for INSERT operations on protected tables

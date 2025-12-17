@@ -1,5 +1,7 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
-import { validateTicket } from './validation'
+import { validateTicketWithReplayPrevention } from './validation'
+import { verifyQRCode } from '@/lib/security/crypto'
+import { transitionTicket } from './state-machine'
 import { logAuditEvent } from '@/lib/security/audit'
 import { TICKET_STATUS } from '@/lib/utils/constants'
 import type { NextRequest } from 'next/server'
@@ -21,34 +23,54 @@ export async function processScan(
   request?: NextRequest
 ): Promise<ScanResult> {
   const supabase = await createServiceRoleClient()
+  const scanTime = new Date()
 
-  // Validate ticket
-  const validation = await validateTicket(qrSignature, scannerId)
+  // Extract nonce from QR signature for tracking
+  let nonce: string
+  try {
+    const payload = await verifyQRCode(qrSignature)
+    nonce = payload.nonce
+  } catch (error) {
+    return {
+      success: false,
+      ticketId: '',
+      ticketNumber: '',
+      eventId: '',
+      scanCount: 0,
+      message: 'Invalid QR code signature',
+      rejectionReason: 'Invalid QR code signature',
+    }
+  }
+
+  // Validate ticket with replay prevention
+  const validation = await validateTicketWithReplayPrevention(qrSignature, scannerId, scanTime)
 
   if (!validation.isValid) {
-    // Record invalid scan
-    await supabase.from('ticket_scans').insert({
-      ticket_id: validation.ticketId,
-      scanned_by: scannerId,
-      scan_location: location ? `(${location.lng},${location.lat})` : null,
-      scan_method: 'qr',
-      is_valid: false,
-      rejection_reason: validation.rejectionReason,
-    })
+    // Record invalid scan (only if we have a ticket ID)
+    if (validation.ticketId) {
+      await supabase.from('ticket_scans').insert({
+        ticket_id: validation.ticketId,
+        scanned_by: scannerId,
+        scan_location: location ? `(${location.lng},${location.lat})` : null,
+        scan_method: 'qr',
+        is_valid: false,
+        rejection_reason: validation.rejectionReason,
+      })
 
-    await logAuditEvent(
-      {
-        userId: scannerId,
-        action: 'ticket_scan_failed',
-        resourceType: 'ticket',
-        resourceId: validation.ticketId,
-        metadata: {
-          reason: validation.rejectionReason,
-          scanCount: validation.scanCount,
+      await logAuditEvent(
+        {
+          userId: scannerId,
+          action: 'ticket_scan_failed',
+          resourceType: 'ticket',
+          resourceId: validation.ticketId,
+          metadata: {
+            reason: validation.rejectionReason,
+            scanCount: validation.scanCount,
+          },
         },
-      },
-      request
-    )
+        request
+      )
+    }
 
     return {
       success: false,
@@ -80,12 +102,19 @@ export async function processScan(
     throw new Error(`Failed to record scan: ${scanError.message}`)
   }
 
+  // Mark nonce as used (link it to the scan)
+  await supabase
+    .from('ticket_nonces')
+    .update({ scan_id: scan.id, used_at: now })
+    .eq('ticket_id', validation.ticketId)
+    .eq('nonce', nonce)
+    .is('scan_id', null) // Only update if not already used
+
   // Update ticket scan count and timestamps
   const updateData: {
     scan_count: number
     last_scan_at: string
     first_scan_at?: string
-    status?: string
   } = {
     scan_count: validation.scanCount + 1,
     last_scan_at: now,
@@ -93,18 +122,9 @@ export async function processScan(
 
   if (validation.scanCount === 0) {
     updateData.first_scan_at = now
-    // Mark as used if single-scan ticket
-    const { data: ticketType } = await supabase
-      .from('ticket_types')
-      .select('is_multi_scan')
-      .eq('id', validation.ticketId)
-      .single()
-
-    if (ticketType && !ticketType.is_multi_scan) {
-      updateData.status = TICKET_STATUS.USED
-    }
   }
 
+  // Update ticket scan count
   const { error: updateError } = await supabase
     .from('tickets')
     .update(updateData)
@@ -112,6 +132,25 @@ export async function processScan(
 
   if (updateError) {
     console.error('Error updating ticket:', updateError)
+  }
+
+  // Transition ticket state if needed (using state machine)
+  // If this is the first scan and ticket is single-use, transition to USED
+  if (validation.scanCount === 0) {
+    const { data: ticketType } = await supabase
+      .from('ticket_types')
+      .select('is_multi_scan')
+      .eq('id', validation.ticketId)
+      .single()
+
+    if (ticketType && !ticketType.is_multi_scan && validation.status === TICKET_STATUS.PAID) {
+      try {
+        await transitionTicket(validation.ticketId, TICKET_STATUS.USED, 'First scan of single-use ticket', scannerId, request)
+      } catch (error) {
+        // Log but don't fail the scan if state transition fails
+        console.error('Error transitioning ticket state:', error)
+      }
+    }
   }
 
   // Log audit event
@@ -124,6 +163,7 @@ export async function processScan(
       metadata: {
         scanCount: validation.scanCount + 1,
         location,
+        nonce,
       },
     },
     request

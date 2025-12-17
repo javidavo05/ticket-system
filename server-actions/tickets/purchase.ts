@@ -5,8 +5,6 @@ import { getCurrentUser } from '@/lib/auth/permissions'
 import { purchaseTicketsSchema } from '@/lib/utils/validation'
 import { checkTicketTypeAvailability, reserveTickets } from '@/lib/services/events/availability'
 import { generateTickets } from '@/lib/services/tickets/generation'
-import { createIdempotencyKey } from '@/lib/services/payments/idempotency'
-import { getDefaultPaymentProvider } from '@/lib/services/payments/gateway'
 import { PAYMENT_PROVIDERS, PAYMENT_STATUS } from '@/lib/utils/constants'
 import { ValidationError, NotFoundError } from '@/lib/utils/errors'
 import { rateLimit, getRateLimitKey } from '@/lib/security/rate-limit'
@@ -61,7 +59,7 @@ export async function purchaseTickets(formData: FormData) {
   const supabase = await createServiceRoleClient()
   const { data: ticketType, error: ticketTypeError } = await supabase
     .from('ticket_types')
-    .select('price, event_id')
+    .select('price, event_id, organization_id')
     .eq('id', validated.ticketTypeId)
     .single()
 
@@ -104,26 +102,43 @@ export async function purchaseTickets(formData: FormData) {
     throw new ValidationError('Tickets no longer available')
   }
 
-  // Create payment record
-  const idempotencyKey = await createIdempotencyKey()
-  const paymentProvider = getDefaultPaymentProvider()
+  // Create payment using new payment creation service
+  const { createPayment } = await import('@/lib/services/payments/creation')
+  
+  const paymentResult = await createPayment({
+    userId: user?.id,
+    organizationId: ticketType.organization_id || undefined,
+    amount: total,
+    currency: 'USD',
+    provider: process.env.DEFAULT_PAYMENT_PROVIDER || 'yappy',
+    paymentMethod: 'card',
+    allowsPartial: false,
+    description: `Purchase of ${validated.quantity} ticket(s)`,
+    metadata: {
+      ticketTypeId: validated.ticketTypeId,
+      eventId: validated.eventId,
+      quantity: validated.quantity,
+      discountCode: validated.discountCode,
+      returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/tickets/success?payment=${paymentResult?.paymentId || 'pending'}`,
+      cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/events/${validated.eventId}?cancelled=true`,
+    },
+    items: [{
+      ticketTypeId: validated.ticketTypeId,
+      itemType: 'ticket',
+      amount: total,
+      quantity: validated.quantity,
+    }],
+  })
 
+  // Get payment record
   const { data: payment, error: paymentError } = await supabase
     .from('payments')
-    .insert({
-      idempotency_key: idempotencyKey,
-      user_id: user?.id || null,
-      amount: total.toFixed(2),
-      currency: 'USD',
-      provider: paymentProvider.name as any,
-      status: PAYMENT_STATUS.PENDING,
-      payment_method: 'card',
-    })
-    .select()
+    .select('*')
+    .eq('id', paymentResult.paymentId)
     .single()
 
   if (paymentError || !payment) {
-    throw new Error('Failed to create payment')
+    throw new Error('Failed to retrieve created payment')
   }
 
   // Generate tickets
@@ -136,16 +151,36 @@ export async function purchaseTickets(formData: FormData) {
     paymentId: payment.id,
   }, validated.quantity)
 
-  // Create payment items
-  await supabase.from('payment_items').insert(
-    ticketIds.map(ticketId => ({
-      payment_id: payment.id,
-      ticket_id: ticketId,
-      item_type: 'ticket',
-      amount: ticketType.price,
-      quantity: 1,
-    }))
-  )
+  // Update payment items (they were created by createPayment, but we need to link tickets)
+  // First, get existing payment items
+  const { data: existingItems } = await supabase
+    .from('payment_items')
+    .select('id')
+    .eq('payment_id', payment.id)
+    .limit(validated.quantity)
+
+  if (existingItems && existingItems.length > 0) {
+    // Update items with ticket IDs
+    for (let i = 0; i < Math.min(existingItems.length, ticketIds.length); i++) {
+      await supabase
+        .from('payment_items')
+        .update({
+          ticket_id: ticketIds[i] || null,
+        })
+        .eq('id', existingItems[i].id)
+    }
+  } else {
+    // Fallback: create payment items if they don't exist
+    await supabase.from('payment_items').insert(
+      ticketIds.map(ticketId => ({
+        payment_id: payment.id,
+        ticket_id: ticketId,
+        item_type: 'ticket',
+        amount: ticketType.price,
+        quantity: 1,
+      }))
+    )
+  }
 
   // Record discount usage
   if (discountId) {
@@ -160,19 +195,6 @@ export async function purchaseTickets(formData: FormData) {
       .update({ uses_count: supabase.raw('uses_count + 1') })
       .eq('id', discountId)
   }
-
-  // Create payment session
-  const session = await paymentProvider.createPaymentSession({
-    amount: total,
-    currency: 'USD',
-    description: `${validated.quantity} ticket(s)`,
-    returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/tickets/success?payment=${payment.id}`,
-    cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/events/${validated.eventId}?cancelled=true`,
-    metadata: {
-      paymentId: payment.id,
-      ticketIds,
-    },
-  })
 
   // Log audit event
   await logAuditEvent({
@@ -190,9 +212,10 @@ export async function purchaseTickets(formData: FormData) {
 
   return {
     paymentId: payment.id,
-    sessionId: session.sessionId,
-    redirectUrl: session.redirectUrl,
-    paymentUrl: session.paymentUrl,
+    sessionId: paymentResult.sessionId,
+    redirectUrl: paymentResult.redirectUrl,
+    paymentUrl: paymentResult.paymentUrl,
+    qrCode: paymentResult.qrCode,
   }
 }
 

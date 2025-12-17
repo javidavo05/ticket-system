@@ -115,7 +115,45 @@ export async function getEvents(
   }
 }
 
-export async function getEventBySlug(slug: string) {
+export type EventWithRelations = {
+  id: string
+  slug: string
+  name: string
+  description: string | null
+  event_type: string | null
+  start_date: string
+  end_date: string
+  is_multi_day: boolean
+  location_name: string | null
+  location_address: string | null
+  location_coordinates: unknown | null
+  theme_id: string | null
+  status: string
+  created_by: string
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+  ticket_types: Array<{
+    id: string
+    name: string
+    description: string | null
+    price: string | number
+    quantity_available: number
+    quantity_sold: number
+    max_per_purchase: number | null
+    is_multi_scan: boolean
+    max_scans: number | null
+    sale_start: string | null
+    sale_end: string | null
+  }> | null
+  themes: {
+    id: string
+    name: string
+    config: unknown
+  } | null
+}
+
+export async function getEventBySlug(slug: string): Promise<EventWithRelations | null> {
   let supabase
   try {
     supabase = await createServiceRoleClient()
@@ -156,6 +194,6 @@ export async function getEventBySlug(slug: string) {
     return null
   }
 
-  return event
+  return event as EventWithRelations
 }
 

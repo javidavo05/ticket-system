@@ -18,10 +18,19 @@ export const EVENT_STATUS = {
 
 export const TICKET_STATUS = {
   PENDING_PAYMENT: 'pending_payment',
+  ISSUED: 'issued',
   PAID: 'paid',
   USED: 'used',
   REVOKED: 'revoked',
   REFUNDED: 'refunded',
+} as const
+
+export const TICKET_RULE_TYPES = {
+  SCAN_LIMIT: 'scan_limit',
+  TIME_WINDOW: 'time_window',
+  ZONE_RESTRICTION: 'zone_restriction',
+  MULTI_DAY_ACCESS: 'multi_day_access',
+  DATE_RANGE: 'date_range',
 } as const
 
 export const PAYMENT_STATUS = {
@@ -30,6 +39,19 @@ export const PAYMENT_STATUS = {
   COMPLETED: 'completed',
   FAILED: 'failed',
   REFUNDED: 'refunded',
+  CANCELLED: 'cancelled',
+} as const
+
+export const PAYMENT_TRANSACTION_TYPE = {
+  PAYMENT: 'payment',
+  REFUND: 'refund',
+  ADJUSTMENT: 'adjustment',
+} as const
+
+export const PAYMENT_TRANSACTION_STATUS = {
+  PENDING: 'pending',
+  COMPLETED: 'completed',
+  FAILED: 'failed',
 } as const
 
 export const PAYMENT_PROVIDERS = {
