@@ -29,11 +29,13 @@ export async function POST(request: NextRequest) {
     const supabase = await createServiceRoleClient()
 
     // Validate binding token
-    const { data: bindingTokenData, error: tokenError } = await supabase
+    const tokenQuery = supabase
       .from('binding_tokens')
       .select('id, user_id, expires_at, used_at')
       .eq('token', validated.token)
       .single()
+    
+    const { data: bindingTokenData, error: tokenError } = await tokenQuery
 
     if (tokenError || !bindingTokenData) {
       return NextResponse.json(
@@ -43,12 +45,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Type assertion after null check
-    const bindingToken = bindingTokenData as {
+    type BindingTokenRow = {
       id: string
       user_id: string
       expires_at: string
       used_at: string | null
     }
+    const bindingToken = bindingTokenData as unknown as BindingTokenRow
 
     // Check if token is expired
     const expiresAt = new Date(bindingToken.expires_at)
@@ -116,12 +119,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Mark token as used (prevent reuse)
-    await (supabase
+    // Create a fresh query builder to avoid type inference issues
+    const updateQuery = supabase
       .from('binding_tokens')
-      .update({
-        used_at: new Date().toISOString(),
-      } as any)
-      .eq('id', bindingToken.id) as any)
+      .update({ used_at: new Date().toISOString() })
+      .eq('id', bindingToken.id)
+    
+    await (updateQuery as any)
 
     let bandId: string
 
