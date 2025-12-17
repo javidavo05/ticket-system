@@ -58,15 +58,16 @@ export async function createPayment(
   const existingPaymentId = await checkIdempotency(idempotencyKey)
   if (existingPaymentId) {
     // Payment already exists, return existing payment info
-    const { data: existingPayment } = await supabase
+    const { data: existingPayment } = await (supabase
       .from('payments')
       .select('id, provider_payment_id, status')
       .eq('id', existingPaymentId)
-      .single()
+      .single() as any)
 
     if (existingPayment) {
+      const existingPaymentData = existingPayment as any
       return {
-        paymentId: existingPayment.id,
+        paymentId: existingPaymentData.id,
       }
     }
   }
@@ -79,8 +80,8 @@ export async function createPayment(
   const expiresAt = options.expiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000)
 
   // Create payment record
-  const { data: payment, error: paymentError } = await supabase
-    .from('payments')
+  const { data: payment, error: paymentError } = await ((supabase
+    .from('payments') as any)
     .insert({
       idempotency_key: idempotencyKey,
       user_id: options.userId || null,
@@ -97,27 +98,29 @@ export async function createPayment(
       metadata: options.metadata || {},
     })
     .select()
-    .single()
+    .single())
 
   if (paymentError || !payment) {
     throw new Error(`Failed to create payment: ${paymentError?.message}`)
   }
 
+  const paymentData = payment as any
+
   // Create payment items if provided
   if (options.items && options.items.length > 0) {
     const items = options.items.map((item) => ({
-      payment_id: payment.id,
+      payment_id: paymentData.id,
       ticket_id: null,
       item_type: item.itemType as any,
       amount: item.amount.toFixed(2),
       quantity: item.quantity,
     }))
 
-    const { error: itemsError } = await supabase.from('payment_items').insert(items)
+    const { error: itemsError } = await ((supabase.from('payment_items') as any).insert(items))
 
     if (itemsError) {
       // Rollback payment creation
-      await supabase.from('payments').delete().eq('id', payment.id)
+      await ((supabase.from('payments') as any).delete().eq('id', paymentData.id))
       throw new Error(`Failed to create payment items: ${itemsError.message}`)
     }
   }
@@ -130,7 +133,7 @@ export async function createPayment(
       description: options.description,
       metadata: {
         ...options.metadata,
-        paymentId: payment.id,
+        paymentId: paymentData.id,
         idempotencyKey,
       },
       returnUrl: options.metadata?.returnUrl,
@@ -139,16 +142,16 @@ export async function createPayment(
 
     // Update payment with provider payment ID if available
     if (session.sessionId) {
-      await supabase
-        .from('payments')
+      await ((supabase
+        .from('payments') as any)
         .update({
           provider_payment_id: session.sessionId,
         })
-        .eq('id', payment.id)
+        .eq('id', paymentData.id))
     }
 
     return {
-      paymentId: payment.id,
+      paymentId: paymentData.id,
       sessionId: session.sessionId,
       redirectUrl: session.redirectUrl,
       paymentUrl: session.paymentUrl,
@@ -157,7 +160,7 @@ export async function createPayment(
     }
   } catch (error) {
     // If session creation fails, mark payment as failed
-    await transitionPayment(payment.id, PAYMENT_STATUS.FAILED, 'Failed to create payment session', undefined)
+    await transitionPayment(paymentData.id, PAYMENT_STATUS.FAILED, 'Failed to create payment session', undefined)
     throw error
   }
 }
@@ -173,15 +176,17 @@ export async function createPartialPayment(
   const supabase = await createServiceRoleClient()
 
   // Get payment
-  const { data: payment, error: paymentError } = await supabase
+  const { data: payment, error: paymentError } = await (supabase
     .from('payments')
     .select('*')
     .eq('id', paymentId)
-    .single()
+    .single() as any)
 
   if (paymentError || !payment) {
     throw new Error(`Payment not found: ${paymentId}`)
   }
+
+  const paymentData = payment as any
 
   // Import domain functions
   const { canAcceptPartialPayment, calculateRemainingAmount } = await import('./domain')
@@ -189,11 +194,11 @@ export async function createPartialPayment(
   // Validate partial payment
   const validation = canAcceptPartialPayment(
     {
-      ...payment,
-      amountPaid: parseFloat(payment.amount_paid as string),
-      allowsPartial: payment.allows_partial,
-      minPartialAmount: payment.min_partial_amount ? parseFloat(payment.min_partial_amount as string) : undefined,
-      status: payment.status as any,
+      ...paymentData,
+      amountPaid: parseFloat(paymentData.amount_paid as string),
+      allowsPartial: paymentData.allows_partial,
+      minPartialAmount: paymentData.min_partial_amount ? parseFloat(paymentData.min_partial_amount as string) : undefined,
+      status: paymentData.status as any,
     },
     amount
   )
@@ -203,59 +208,61 @@ export async function createPartialPayment(
   }
 
   // Validate amount
-  const amountValidation = validatePaymentAmount(amount, payment.currency as string)
+  const amountValidation = validatePaymentAmount(amount, paymentData.currency as string)
   if (!amountValidation.isValid) {
     throw new Error(amountValidation.error || 'Invalid payment amount')
   }
 
   // Get payment provider
-  const providerName = provider || payment.provider
+  const providerName = provider || paymentData.provider
   const paymentProvider = getDefaultPaymentProvider()
 
   // Create payment transaction record
-  const { data: transaction, error: transactionError } = await supabase
-    .from('payment_transactions')
+  const { data: transaction, error: transactionError } = await ((supabase
+    .from('payment_transactions') as any)
     .insert({
       payment_id: paymentId,
       transaction_type: 'payment',
       amount: amount.toFixed(2),
-      currency: payment.currency as string,
+      currency: paymentData.currency as string,
       provider: providerName,
       status: 'pending',
-      organization_id: payment.organization_id || null,
+      organization_id: paymentData.organization_id || null,
       metadata: {
         partialPayment: true,
         originalPaymentId: paymentId,
       },
     })
     .select()
-    .single()
+    .single())
 
   if (transactionError || !transaction) {
     throw new Error(`Failed to create payment transaction: ${transactionError?.message}`)
   }
 
+  const transactionData = transaction as any
+
   // Create payment session
   try {
     const session = await paymentProvider.createPaymentSession({
       amount,
-      currency: payment.currency as string,
+      currency: paymentData.currency as string,
       description: `Partial payment for payment ${paymentId}`,
       metadata: {
         paymentId,
-        transactionId: transaction.id,
+        transactionId: transactionData.id,
         partialPayment: true,
       },
     })
 
     // Update transaction with provider transaction ID
     if (session.sessionId) {
-      await supabase
-        .from('payment_transactions')
+      await ((supabase
+        .from('payment_transactions') as any)
         .update({
           provider_transaction_id: session.sessionId,
         })
-        .eq('id', transaction.id)
+        .eq('id', transactionData.id))
     }
 
     return {
@@ -268,10 +275,10 @@ export async function createPartialPayment(
     }
   } catch (error) {
     // Mark transaction as failed
-    await supabase
-      .from('payment_transactions')
+    await ((supabase
+      .from('payment_transactions') as any)
       .update({ status: 'failed' })
-      .eq('id', transaction.id)
+      .eq('id', transactionData.id))
 
     throw error
   }
