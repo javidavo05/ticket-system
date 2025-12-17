@@ -120,11 +120,11 @@ export async function validateEventCanBePublished(eventId: string): Promise<{
   const reasons: string[] = []
 
   // Get event
-  const { data: event, error } = await supabase
+  const { data: event, error } = await (supabase
     .from('events')
     .select('id, start_date, end_date, status')
     .eq('id', eventId)
-    .single()
+    .single() as any)
 
   if (error || !event) {
     reasons.push('Event not found')
@@ -132,11 +132,11 @@ export async function validateEventCanBePublished(eventId: string): Promise<{
   }
 
   // Check if event has at least one ticket type
-  const { data: ticketTypes } = await supabase
+  const { data: ticketTypes } = await (supabase
     .from('ticket_types')
     .select('id')
     .eq('event_id', eventId)
-    .limit(1)
+    .limit(1) as any)
 
   if (!ticketTypes || ticketTypes.length === 0) {
     reasons.push('Event must have at least one ticket type')
@@ -144,8 +144,8 @@ export async function validateEventCanBePublished(eventId: string): Promise<{
 
   // Validate dates
   const now = new Date()
-  const startDate = new Date(event.start_date)
-  const endDate = new Date(event.end_date)
+  const startDate = new Date((event as any).start_date)
+  const endDate = new Date((event as any).end_date)
 
   if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
     reasons.push('Invalid event dates')
@@ -154,7 +154,7 @@ export async function validateEventCanBePublished(eventId: string): Promise<{
   }
 
   // Check current status
-  if (event.status === EVENT_STATUS.LIVE) {
+  if ((event as any).status === EVENT_STATUS.LIVE) {
     reasons.push('Event is already live')
   }
 
