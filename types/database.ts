@@ -86,6 +86,18 @@ export type Database = {
         Insert: Omit<Database['public']['Tables']['payments']['Row'], 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Database['public']['Tables']['payments']['Insert']>
       }
+      binding_tokens: {
+        Row: {
+          id: string
+          token: string
+          user_id: string
+          expires_at: string
+          used_at: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['binding_tokens']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['binding_tokens']['Insert']>
+      }
     }
     Views: {}
     Functions: {}
