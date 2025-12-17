@@ -13,6 +13,7 @@ export interface ConflictCheckResult {
   serverState?: {
     alreadyScanned: boolean
     ticketStatus: string
+    scanCount: number
     nonceUsed: boolean
   }
 }
@@ -57,6 +58,7 @@ export async function checkConflicts(scan: QueuedScan): Promise<ConflictCheckRes
     .single() as any)
 
   const ticketStatus = (ticket as any)?.status || 'unknown'
+  const scanCount = (ticket as any)?.scan_count || 0
   const isRevoked = ticketStatus === 'revoked'
   const isRefunded = ticketStatus === 'refunded'
 
@@ -70,6 +72,7 @@ export async function checkConflicts(scan: QueuedScan): Promise<ConflictCheckRes
   const serverState = {
     alreadyScanned,
     ticketStatus,
+    scanCount,
     nonceUsed,
   }
 
