@@ -70,24 +70,30 @@ export async function POST(request: NextRequest) {
     if (operationType === 'payment' && validated.amount) {
       // Process payment
       const supabase = await createServiceRoleClient()
-      const { data: band } = await supabase
-        .from('nfc_bands')
-        .select('band_uid')
-        .eq('id', validation.bandId)
-        .single()
+    const { data: bandData } = await supabase
+      .from('nfc_bands')
+      .select('band_uid')
+      .eq('id', validation.bandId)
+      .single()
 
-      if (!band) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'NFC band not found',
-          },
-          { status: 404 }
-        )
-      }
+    if (!bandData) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'NFC band not found',
+        },
+        { status: 404 }
+      )
+    }
 
-      const paymentResult = await processNFCPayment(
-        band.band_uid,
+    // Type assertion for Supabase result
+    type NFCBandRow = {
+      band_uid: string
+    }
+    const band = bandData as unknown as NFCBandRow
+
+    const paymentResult = await processNFCPayment(
+      band.band_uid,
         validated.amount,
         validated.eventId,
         validated.token,

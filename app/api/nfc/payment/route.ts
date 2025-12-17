@@ -56,13 +56,13 @@ export async function POST(request: NextRequest) {
     // In production, you might want to pass band_uid or store it differently
     const { createServiceRoleClient } = await import('@/lib/supabase/server')
     const supabase = await createServiceRoleClient()
-    const { data: band } = await supabase
+    const { data: bandData } = await supabase
       .from('nfc_bands')
       .select('band_uid')
       .eq('id', validation.bandId)
       .single()
 
-    if (!band) {
+    if (!bandData) {
       return NextResponse.json(
         {
           success: false,
@@ -71,6 +71,12 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       )
     }
+
+    // Type assertion for Supabase result
+    type NFCBandRow = {
+      band_uid: string
+    }
+    const band = bandData as unknown as NFCBandRow
 
     const result = await processNFCPayment(
       band.band_uid,
