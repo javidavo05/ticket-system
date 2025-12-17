@@ -355,7 +355,6 @@ async function createTicketsForGroup(
       purchaserId: promoterId,
       purchaserEmail: promoterData.email || '',
       purchaserName: promoterData.full_name || 'Promoter',
-      organizationId,
     })
     ticketIds.push(ticketId)
   }
