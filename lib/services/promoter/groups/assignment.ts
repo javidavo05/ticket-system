@@ -44,18 +44,20 @@ export async function bulkAssignTickets(
   const supabase = await createServiceRoleClient()
 
   // Get group info
-  const { data: group, error: groupError } = await supabase
+  const { data: group, error: groupError } = await (supabase
     .from('ticket_groups')
     .select('total_tickets, tickets_assigned, event_id, ticket_type_id, organization_id')
     .eq('id', groupId)
-    .single()
+    .single() as any)
 
   if (groupError || !group) {
     throw new NotFoundError('Ticket group')
   }
 
+  const groupData = (group || {}) as any
+
   // Validate we have enough unassigned tickets
-  const availableTickets = group.total_tickets - group.tickets_assigned
+  const availableTickets = (groupData.total_tickets || 0) - (groupData.tickets_assigned || 0)
   if (assignments.length > availableTickets) {
     throw new ValidationError(
       `Only ${availableTickets} tickets available for assignment. Requested ${assignments.length}.`
@@ -63,42 +65,44 @@ export async function bulkAssignTickets(
   }
 
   // Get unassigned tickets for this group
-  const { data: unassignedTickets, error: ticketsError } = await supabase
+  const { data: unassignedTickets, error: ticketsError } = await (supabase
     .from('tickets')
     .select('id')
     .eq('ticket_group_id', groupId)
     .is('assigned_to_email', null)
-    .limit(assignments.length)
+    .limit(assignments.length) as any)
 
   if (ticketsError) {
     throw new Error(`Failed to fetch tickets: ${ticketsError.message}`)
   }
 
-  if (!unassignedTickets || unassignedTickets.length < assignments.length) {
+  const unassignedTicketsData = (unassignedTickets || []) as any[]
+  if (unassignedTicketsData.length < assignments.length) {
     // Need to create more tickets
-    const ticketsToCreate = assignments.length - (unassignedTickets?.length || 0)
+    const ticketsToCreate = assignments.length - unassignedTicketsData.length
     await createTicketsForGroup(
       groupId,
-      group.event_id,
-      group.ticket_type_id,
-      group.organization_id || undefined,
+      groupData.event_id,
+      groupData.ticket_type_id,
+      groupData.organization_id || undefined,
       promoterId,
       ticketsToCreate
     )
 
     // Fetch again
-    const { data: newTickets, error: newTicketsError } = await supabase
+    const { data: newTickets, error: newTicketsError } = await (supabase
       .from('tickets')
       .select('id')
       .eq('ticket_group_id', groupId)
       .is('assigned_to_email', null)
-      .limit(assignments.length)
+      .limit(assignments.length) as any)
 
     if (newTicketsError || !newTickets) {
       throw new Error('Failed to create tickets for group')
     }
 
-    unassignedTickets.push(...newTickets)
+    const newTicketsData = (newTickets || []) as any[]
+    unassignedTicketsData.push(...newTicketsData)
   }
 
   const result: BulkAssignmentResult = {
@@ -109,9 +113,9 @@ export async function bulkAssignTickets(
   }
 
   // Assign each ticket
-  for (let i = 0; i < assignments.length && i < unassignedTickets.length; i++) {
+  for (let i = 0; i < assignments.length && i < unassignedTicketsData.length; i++) {
     const assignment = assignments[i]
-    const ticketId = unassignedTickets[i].id
+    const ticketId = unassignedTicketsData[i].id
 
     // Validate email
     const emailValidation = validateEmail(assignment.email)
@@ -137,13 +141,13 @@ export async function bulkAssignTickets(
   }
 
   // Update group counters
-  const { error: updateError } = await supabase
-    .from('ticket_groups')
+  const { error: updateError } = await ((supabase
+    .from('ticket_groups') as any)
     .update({
-      tickets_assigned: group.tickets_assigned + result.assignedCount,
+      tickets_assigned: groupData.tickets_assigned + result.assignedCount,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', groupId)
+    .eq('id', groupId))
 
   if (updateError) {
     throw new Error(`Failed to update group: ${updateError.message}`)
@@ -170,52 +174,54 @@ export async function assignTicket(
   const supabase = await createServiceRoleClient()
 
   // Get ticket and verify it belongs to promoter
-  const { data: ticket, error: ticketError } = await supabase
+  const { data: ticket, error: ticketError } = await (supabase
     .from('tickets')
     .select('id, ticket_group_id, promoter_id, assigned_to_email')
     .eq('id', ticketId)
-    .single()
+    .single() as any)
 
   if (ticketError || !ticket) {
     throw new NotFoundError('Ticket')
   }
 
+  const ticketData = ticket as any
+
   // Verify ticket belongs to promoter
-  if (ticket.promoter_id !== promoterId) {
+  if (ticketData.promoter_id !== promoterId) {
     throw new ValidationError('Ticket does not belong to this promoter')
   }
 
   // Check if already assigned
-  if (ticket.assigned_to_email) {
+  if (ticketData.assigned_to_email) {
     throw new ValidationError('Ticket is already assigned')
   }
 
   // Update ticket
-  const { error: updateError } = await supabase
-    .from('tickets')
+  const { error: updateError } = await ((supabase
+    .from('tickets') as any)
     .update({
       assigned_to_email: assignment.email,
       assigned_to_name: assignment.name,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', ticketId)
+    .eq('id', ticketId))
 
   if (updateError) {
     throw new Error(`Failed to assign ticket: ${updateError.message}`)
   }
 
   // Create assignment record
-  if (ticket.ticket_group_id) {
-    const { error: assignmentError } = await supabase.from('ticket_assignments').insert({
+  if (ticketData.ticket_group_id) {
+    const { error: assignmentError } = await ((supabase.from('ticket_assignments') as any).insert({
       ticket_id: ticketId,
-      ticket_group_id: ticket.ticket_group_id,
+      ticket_group_id: ticketData.ticket_group_id,
       promoter_id: promoterId,
       assigned_to_email: assignment.email,
       assigned_to_name: assignment.name,
       assigned_to_phone: assignment.phone,
       assigned_by: promoterId,
       status: 'assigned',
-    })
+    }))
 
     if (assignmentError) {
       // Log error but don't fail - assignment is already done
@@ -231,51 +237,53 @@ export async function unassignTicket(ticketId: string, promoterId: string): Prom
   const supabase = await createServiceRoleClient()
 
   // Get ticket and verify it belongs to promoter
-  const { data: ticket, error: ticketError } = await supabase
+  const { data: ticket, error: ticketError } = await (supabase
     .from('tickets')
     .select('id, ticket_group_id, promoter_id, assigned_to_email')
     .eq('id', ticketId)
-    .single()
+    .single() as any)
 
   if (ticketError || !ticket) {
     throw new NotFoundError('Ticket')
   }
 
-  if (ticket.promoter_id !== promoterId) {
+  const ticketData = ticket as any
+
+  if (ticketData.promoter_id !== promoterId) {
     throw new ValidationError('Ticket does not belong to this promoter')
   }
 
-  if (!ticket.assigned_to_email) {
+  if (!ticketData.assigned_to_email) {
     throw new ValidationError('Ticket is not assigned')
   }
 
   // Update ticket
-  const { error: updateError } = await supabase
-    .from('tickets')
+  const { error: updateError } = await ((supabase
+    .from('tickets') as any)
     .update({
       assigned_to_email: null,
       assigned_to_name: null,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', ticketId)
+    .eq('id', ticketId))
 
   if (updateError) {
     throw new Error(`Failed to unassign ticket: ${updateError.message}`)
   }
 
   // Update assignment record status
-  if (ticket.ticket_group_id) {
-    await supabase
-      .from('ticket_assignments')
+  if (ticketData.ticket_group_id) {
+    await ((supabase
+      .from('ticket_assignments') as any)
       .update({ status: 'cancelled' })
       .eq('ticket_id', ticketId)
-      .eq('status', 'assigned')
+      .eq('status', 'assigned'))
   }
 
   // Update group counter
-  if (ticket.ticket_group_id) {
-    await supabase.rpc('decrement_tickets_assigned', {
-      group_id: ticket.ticket_group_id,
+  if (ticketData.ticket_group_id) {
+    await (supabase.rpc as any)('decrement_tickets_assigned', {
+      group_id: ticketData.ticket_group_id,
     })
   }
 }
@@ -286,11 +294,11 @@ export async function unassignTicket(ticketId: string, promoterId: string): Prom
 export async function getGroupAssignments(groupId: string) {
   const supabase = await createServiceRoleClient()
 
-  const { data: assignments, error } = await supabase
+  const { data: assignments, error } = await (supabase
     .from('ticket_assignments')
     .select('*, tickets(*)')
     .eq('ticket_group_id', groupId)
-    .order('assigned_at', { ascending: false })
+    .order('assigned_at', { ascending: false }) as any)
 
   if (error) {
     throw new Error(`Failed to fetch assignments: ${error.message}`)
@@ -313,26 +321,30 @@ async function createTicketsForGroup(
   const supabase = await createServiceRoleClient()
 
   // Get ticket type for pricing
-  const { data: ticketType, error: ticketTypeError } = await supabase
+  const { data: ticketType, error: ticketTypeError } = await (supabase
     .from('ticket_types')
     .select('price')
     .eq('id', ticketTypeId)
-    .single()
+    .single() as any)
 
   if (ticketTypeError || !ticketType) {
     throw new NotFoundError('Ticket type')
   }
 
+  const ticketTypeData = ticketType as any
+
   // Get promoter info
-  const { data: promoter, error: promoterError } = await supabase
+  const { data: promoter, error: promoterError } = await (supabase
     .from('users')
     .select('email, full_name')
     .eq('id', promoterId)
-    .single()
+    .single() as any)
 
   if (promoterError || !promoter) {
     throw new NotFoundError('Promoter')
   }
+
+  const promoterData = promoter as any
 
   // Generate tickets
   const ticketIds: string[] = []
@@ -341,21 +353,21 @@ async function createTicketsForGroup(
       ticketTypeId,
       eventId,
       purchaserId: promoterId,
-      purchaserEmail: promoter.email || '',
-      purchaserName: promoter.full_name || 'Promoter',
+      purchaserEmail: promoterData.email || '',
+      purchaserName: promoterData.full_name || 'Promoter',
       organizationId,
     })
     ticketIds.push(ticketId)
   }
 
   // Update tickets with group_id and promoter_id
-  const { error: updateError } = await supabase
-    .from('tickets')
+  const { error: updateError } = await ((supabase
+    .from('tickets') as any)
     .update({
       ticket_group_id: groupId,
       promoter_id: promoterId,
     })
-    .in('id', ticketIds)
+    .in('id', ticketIds))
 
   if (updateError) {
     throw new Error(`Failed to link tickets to group: ${updateError.message}`)
