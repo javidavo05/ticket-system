@@ -62,11 +62,11 @@ export async function getThemeAssignments(themeId: string): Promise<{
   }
 
   // Get theme to check if it's a default theme
-  const { data: theme, error: themeError } = await supabase
+  const { data: theme, error: themeError } = await (supabase
     .from('themes')
     .select('organization_id, is_default')
     .eq('id', themeId)
-    .single()
+    .single() as any)
 
   if (themeError || !theme) {
     throw new NotFoundError('Theme')
@@ -74,11 +74,12 @@ export async function getThemeAssignments(themeId: string): Promise<{
 
   // Get organization if this is a default theme
   let organizations: Array<{ id: string; name: string }> = []
-  if (theme.is_default && theme.organization_id) {
+  const themeData = theme as any
+  if (themeData.is_default && themeData.organization_id) {
     const { data: org, error: orgError } = await supabase
       .from('organizations')
       .select('id, name')
-      .eq('id', theme.organization_id)
+      .eq('id', themeData.organization_id)
       .is('deleted_at', null)
       .single()
 
@@ -90,7 +91,7 @@ export async function getThemeAssignments(themeId: string): Promise<{
   return {
     events: events || [],
     organizations,
-    isDefaultForOrganization: theme.is_default && theme.organization_id ? theme.organization_id : undefined,
+    isDefaultForOrganization: themeData.is_default && themeData.organization_id ? themeData.organization_id : undefined,
   }
 }
 
