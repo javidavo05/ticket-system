@@ -46,19 +46,21 @@ export async function createGroupPayment(
   const supabase = await createServiceRoleClient()
 
   // Get group info
-  const { data: group, error: groupError } = await supabase
+  const { data: group, error: groupError } = await (supabase
     .from('ticket_groups')
     .select('total_amount, amount_paid, allows_partial, min_partial_amount, organization_id, payment_id')
     .eq('id', groupId)
-    .single()
+    .single() as any)
 
   if (groupError || !group) {
     throw new NotFoundError('Ticket group')
   }
 
+  const groupData = group as any
+
   // Validate amount
-  const totalAmount = parseFloat(group.total_amount as string)
-  const amountPaid = parseFloat(group.amount_paid as string)
+  const totalAmount = parseFloat(groupData.total_amount as string)
+  const amountPaid = parseFloat(groupData.amount_paid as string)
   const remainingAmount = totalAmount - amountPaid
 
   if (amount <= 0) {
@@ -71,12 +73,12 @@ export async function createGroupPayment(
     )
   }
 
-  if (!group.allows_partial && amount < remainingAmount) {
+  if (!groupData.allows_partial && amount < remainingAmount) {
     throw new ValidationError('Full payment required. Partial payments not allowed.')
   }
 
-  if (group.min_partial_amount) {
-    const minAmount = parseFloat(group.min_partial_amount as string)
+  if (groupData.min_partial_amount) {
+    const minAmount = parseFloat(groupData.min_partial_amount as string)
     if (amount < minAmount) {
       throw new ValidationError(
         `Payment amount must be at least ${minAmount}. Minimum partial amount required.`
@@ -85,20 +87,20 @@ export async function createGroupPayment(
   }
 
   // Use existing payment or create new one
-  let paymentId = group.payment_id
+  let paymentId = groupData.payment_id
 
   if (!paymentId) {
     // Create new payment
     const paymentResult = await createPayment({
       userId: promoterId,
-      organizationId: group.organization_id || undefined,
+      organizationId: groupData.organization_id || undefined,
       amount: totalAmount,
       currency: 'USD',
       provider: provider as any,
       paymentMethod: method as any,
-      allowsPartial: group.allows_partial,
-      minPartialAmount: group.min_partial_amount
-        ? parseFloat(group.min_partial_amount as string)
+      allowsPartial: groupData.allows_partial,
+      minPartialAmount: groupData.min_partial_amount
+        ? parseFloat(groupData.min_partial_amount as string)
         : undefined,
       description: `Payment for ticket group ${groupId}`,
       metadata: {
@@ -110,13 +112,13 @@ export async function createGroupPayment(
     paymentId = paymentResult.paymentId
 
     // Link payment to group
-    const { error: linkError } = await supabase
-      .from('ticket_groups')
+    const { error: linkError } = await ((supabase
+      .from('ticket_groups') as any)
       .update({
         payment_id: paymentId,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', groupId)
+      .eq('id', groupId))
 
     if (linkError) {
       throw new Error(`Failed to link payment to group: ${linkError.message}`)
@@ -142,23 +144,25 @@ export async function recordPartialPayment(
   const supabase = await createServiceRoleClient()
 
   // Get group info
-  const { data: group, error: groupError } = await supabase
+  const { data: group, error: groupError } = await (supabase
     .from('ticket_groups')
-    .select('total_amount, amount_paid, payment_id, allows_partial')
+    .select('total_amount, amount_paid, payment_id, allows_partial, organization_id')
     .eq('id', groupId)
-    .single()
+    .single() as any)
 
   if (groupError || !group) {
     throw new NotFoundError('Ticket group')
   }
 
-  if (!group.payment_id) {
+  const groupData = group as any
+
+  if (!groupData.payment_id) {
     throw new ValidationError('Group does not have a payment record')
   }
 
   // Validate amount
-  const totalAmount = parseFloat(group.total_amount as string)
-  const currentAmountPaid = parseFloat(group.amount_paid as string)
+  const totalAmount = parseFloat(groupData.total_amount as string)
+  const currentAmountPaid = parseFloat(groupData.amount_paid as string)
   const newAmountPaid = currentAmountPaid + amount
 
   if (newAmountPaid > totalAmount) {
@@ -168,46 +172,46 @@ export async function recordPartialPayment(
   }
 
   // Create payment transaction
-  const { error: transactionError } = await supabase.from('payment_transactions').insert({
-    payment_id: group.payment_id,
+  const { error: transactionError } = await ((supabase.from('payment_transactions') as any).insert({
+    payment_id: groupData.payment_id,
     transaction_type: 'payment',
     amount: amount.toFixed(2),
     currency: 'USD',
     provider: provider,
     provider_transaction_id: transactionId,
     status: 'completed',
-    organization_id: group.organization_id || null,
+    organization_id: groupData.organization_id || null,
     metadata: {
       groupId,
       partialPayment: true,
     },
-  })
+  }))
 
   if (transactionError) {
     throw new Error(`Failed to create payment transaction: ${transactionError.message}`)
   }
 
   // Update group amount_paid
-  const { error: updateError } = await supabase
-    .from('ticket_groups')
+  const { error: updateError } = await ((supabase
+    .from('ticket_groups') as any)
     .update({
       amount_paid: newAmountPaid.toFixed(2),
       updated_at: new Date().toISOString(),
     })
-    .eq('id', groupId)
+    .eq('id', groupId))
 
   if (updateError) {
     throw new Error(`Failed to update group payment: ${updateError.message}`)
   }
 
   // Update payment amount_paid
-  const { error: paymentUpdateError } = await supabase
-    .from('payments')
+  const { error: paymentUpdateError } = await ((supabase
+    .from('payments') as any)
     .update({
       amount_paid: newAmountPaid.toFixed(2),
       updated_at: new Date().toISOString(),
     })
-    .eq('id', group.payment_id)
+    .eq('id', groupData.payment_id))
 
   if (paymentUpdateError) {
     throw new Error(`Failed to update payment: ${paymentUpdateError.message}`)
@@ -217,7 +221,7 @@ export async function recordPartialPayment(
   if (newAmountPaid >= totalAmount) {
     // Update payment status to completed
     await transitionPayment(
-      group.payment_id,
+      groupData.payment_id,
       PAYMENT_STATUS.COMPLETED,
       'Group payment completed',
       undefined
@@ -234,33 +238,36 @@ export async function calculateGroupPaymentStatus(
   const supabase = await createServiceRoleClient()
 
   // Get group info
-  const { data: group, error: groupError } = await supabase
+  const { data: group, error: groupError } = await (supabase
     .from('ticket_groups')
     .select('total_amount, amount_paid, allows_partial, payment_id')
     .eq('id', groupId)
-    .single()
+    .single() as any)
 
   if (groupError || !group) {
     throw new NotFoundError('Ticket group')
   }
 
-  const totalAmount = parseFloat(group.total_amount as string)
-  const amountPaid = parseFloat(group.amount_paid as string)
+  const groupData = group as any
+
+  const totalAmount = parseFloat(groupData.total_amount as string)
+  const amountPaid = parseFloat(groupData.amount_paid as string)
   const remainingAmount = totalAmount - amountPaid
   const isComplete = amountPaid >= totalAmount
 
   // Get payment transactions
   let transactions: GroupPaymentStatus['transactions'] = []
 
-  if (group.payment_id) {
-    const { data: paymentTransactions, error: transactionsError } = await supabase
+  if (groupData.payment_id) {
+    const { data: paymentTransactions, error: transactionsError } = await (supabase
       .from('payment_transactions')
       .select('id, amount, status, created_at')
-      .eq('payment_id', group.payment_id)
-      .order('created_at', { ascending: false })
+      .eq('payment_id', groupData.payment_id)
+      .order('created_at', { ascending: false }) as any)
 
-    if (!transactionsError && paymentTransactions) {
-      transactions = paymentTransactions.map((t) => ({
+    const paymentTransactionsData = (paymentTransactions || []) as any[]
+    if (!transactionsError && paymentTransactionsData.length > 0) {
+      transactions = paymentTransactionsData.map((t: any) => ({
         id: t.id,
         amount: parseFloat(t.amount as string),
         status: t.status,
@@ -269,22 +276,23 @@ export async function calculateGroupPaymentStatus(
     }
 
     // Get payment status
-    const { data: payment, error: paymentError } = await supabase
+    const { data: payment, error: paymentError } = await (supabase
       .from('payments')
       .select('status')
-      .eq('id', group.payment_id)
-      .single()
+      .eq('id', groupData.payment_id)
+      .single() as any)
 
     if (!paymentError && payment) {
+      const paymentData = payment as any
       return {
         groupId,
         totalAmount,
         amountPaid,
         remainingAmount,
         isComplete,
-        allowsPartial: group.allows_partial,
-        paymentId: group.payment_id,
-        paymentStatus: payment.status,
+        allowsPartial: groupData.allows_partial,
+        paymentId: groupData.payment_id,
+        paymentStatus: paymentData.status,
         transactions,
       }
     }
@@ -296,8 +304,8 @@ export async function calculateGroupPaymentStatus(
     amountPaid,
     remainingAmount,
     isComplete,
-    allowsPartial: group.allows_partial,
-    paymentId: group.payment_id || undefined,
+    allowsPartial: groupData.allows_partial,
+    paymentId: groupData.payment_id || undefined,
     transactions,
   }
 }
