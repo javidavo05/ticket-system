@@ -32,28 +32,29 @@ export async function generateSecurityToken(
   const supabase = await createServiceRoleClient()
 
   // Get band information
-  const { data: band, error } = await supabase
+  const { data: band, error } = await (supabase
     .from('nfc_bands')
     .select('id, user_id, event_id, binding_verified_at')
     .eq('id', bandId)
-    .single()
+    .single() as any)
 
   if (error || !band) {
     throw new NotFoundError('NFC band')
   }
 
+  const bandData = band as any
   const now = Math.floor(Date.now() / 1000)
   const expiresAt = now + expiresInHours * 3600
   const nonce = crypto.randomUUID()
 
   const payload: NFCTokenPayload = {
-    bandId: band.id,
-    userId: band.user_id,
-    eventId: band.event_id || undefined,
+    bandId: bandData.id,
+    userId: bandData.user_id,
+    eventId: bandData.event_id || undefined,
     issuedAt: now,
     expiresAt,
     nonce,
-    bindingVerified: !!band.binding_verified_at,
+    bindingVerified: !!bandData.binding_verified_at,
   }
 
   const jwt = await new SignJWT(payload as Record<string, any>)
