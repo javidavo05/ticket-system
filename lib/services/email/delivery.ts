@@ -126,7 +126,7 @@ export async function sendEmailWithTracking(
       // Log audit event
       await logAuditEvent(
         {
-          userId: null,
+          userId: undefined,
           action: 'email_sent',
           resourceType: options.resourceType,
           resourceId: options.resourceId,
