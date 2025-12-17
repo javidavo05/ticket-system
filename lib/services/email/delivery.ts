@@ -180,7 +180,7 @@ export async function sendEmailWithTracking(
       // Log audit event
       await logAuditEvent(
         {
-          userId: null,
+          userId: undefined,
           action: 'email_send_failed_retry',
           resourceType: options.resourceType,
           resourceId: options.resourceId,
@@ -214,7 +214,7 @@ export async function sendEmailWithTracking(
       // Log audit event
       await logAuditEvent(
         {
-          userId: null,
+          userId: undefined,
           action: 'email_send_failed',
           resourceType: options.resourceType,
           resourceId: options.resourceId,
