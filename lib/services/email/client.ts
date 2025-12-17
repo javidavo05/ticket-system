@@ -121,7 +121,7 @@ class ResendProvider implements EmailProvider {
 
       return {
         success: true,
-        messageId: result.id,
+        messageId: (result as any).id || (result as any).data?.id,
       }
     } catch (error: any) {
       const errorMessage = error?.message || String(error)
