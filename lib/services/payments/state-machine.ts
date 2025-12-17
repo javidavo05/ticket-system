@@ -18,7 +18,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 /**
  * Terminal states that cannot transition to any other state
  */
-const TERMINAL_STATES = [PAYMENT_STATUS.REFUNDED, PAYMENT_STATUS.CANCELLED]
+const TERMINAL_STATES: string[] = [PAYMENT_STATUS.REFUNDED, PAYMENT_STATUS.CANCELLED]
 
 /**
  * Check if a payment state transition is valid
@@ -66,17 +66,18 @@ export async function transitionPayment(
   const supabase = await createServiceRoleClient()
 
   // Get current payment state
-  const { data: payment, error: fetchError } = await supabase
+  const { data: payment, error: fetchError } = await (supabase
     .from('payments')
     .select('id, status, amount, amount_paid, organization_id')
     .eq('id', paymentId)
-    .single()
+    .single() as any)
 
   if (fetchError || !payment) {
     throw new Error(`Payment not found: ${paymentId}`)
   }
 
-  const currentStatus = payment.status
+  const paymentData = payment as any
+  const currentStatus = paymentData.status
 
   // Validate transition
   if (!canTransitionPayment(currentStatus, newStatus)) {
@@ -109,10 +110,10 @@ export async function transitionPayment(
   }
 
   // Update payment
-  const { error: updateError } = await supabase
-    .from('payments')
+  const { error: updateError } = await ((supabase
+    .from('payments') as any)
     .update(updateData)
-    .eq('id', paymentId)
+    .eq('id', paymentId))
 
   if (updateError) {
     throw new Error(`Failed to transition payment: ${updateError.message}`)
@@ -121,19 +122,21 @@ export async function transitionPayment(
   // Log audit event
   await logAuditEvent(
     {
-      userId: actorId || null,
+      userId: actorId || undefined,
       action: 'payment_state_transition',
       resourceType: 'payment',
       resourceId: paymentId,
-      organizationId: payment.organization_id || undefined,
       changes: {
-        from: currentStatus,
-        to: newStatus,
-        reason: reason || null,
+        status: {
+          before: currentStatus,
+          after: newStatus,
+        },
       },
       metadata: {
-        amount: payment.amount,
-        amountPaid: payment.amount_paid,
+        organizationId: paymentData.organization_id || undefined,
+        amount: paymentData.amount,
+        amountPaid: paymentData.amount_paid,
+        reason: reason || undefined,
       },
     },
     request
@@ -153,17 +156,18 @@ export async function transitionPayments(
   const supabase = await createServiceRoleClient()
 
   // Get current states
-  const { data: payments, error: fetchError } = await supabase
+  const { data: payments, error: fetchError } = await (supabase
     .from('payments')
     .select('id, status, organization_id')
-    .in('id', paymentIds)
+    .in('id', paymentIds) as any)
 
   if (fetchError || !payments) {
     throw new Error(`Failed to fetch payments: ${fetchError?.message}`)
   }
 
+  const paymentsData = (payments || []) as any[]
   // Validate all transitions
-  for (const payment of payments) {
+  for (const payment of paymentsData) {
     if (!canTransitionPayment(payment.status, newStatus)) {
       throw new Error(
         `Invalid state transition for payment ${payment.id}: ` +
@@ -189,31 +193,33 @@ export async function transitionPayments(
   }
 
   // Update all payments
-  const { error: updateError } = await supabase
-    .from('payments')
+  const { error: updateError } = await ((supabase
+    .from('payments') as any)
     .update(updateData)
-    .in('id', paymentIds)
+    .in('id', paymentIds))
 
   if (updateError) {
     throw new Error(`Failed to transition payments: ${updateError.message}`)
   }
 
   // Log audit events for each payment
-  for (const payment of payments) {
+  for (const payment of paymentsData) {
     await logAuditEvent(
       {
-        userId: actorId || null,
+        userId: actorId || undefined,
         action: 'payment_state_transition',
         resourceType: 'payment',
         resourceId: payment.id,
-        organizationId: payment.organization_id || undefined,
         changes: {
-          from: payment.status,
-          to: newStatus,
-          reason: reason || null,
+          status: {
+            before: payment.status,
+            after: newStatus,
+          },
         },
         metadata: {
+          organizationId: payment.organization_id || undefined,
           batchTransition: true,
+          reason: reason || undefined,
         },
       },
       request
