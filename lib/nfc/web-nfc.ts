@@ -16,14 +16,7 @@ import {
   NFCReadError,
   NFCWriteError,
 } from './errors'
-
-// Extend Window interface for Web NFC API
-declare global {
-  interface Window {
-    NDEFReader?: NDEFReader
-    NDEFWriter?: NDEFWriter
-  }
-}
+import type { NDEFReader, NDEFWriter, NDEFReadingEvent, NDEFRecord } from './types'
 
 export interface NFCReadResult {
   uid?: string
@@ -148,13 +141,13 @@ export class WebNFCService {
           
           try {
             const result: NFCReadResult = {
-              records: nfcEvent.message.records,
+              records: event.message.records,
             }
 
             // Try to extract UID from serial number (if available)
-            if (nfcEvent.serialNumber) {
-              result.uid = nfcEvent.serialNumber
-              result.serialNumber = nfcEvent.serialNumber
+            if (event.serialNumber) {
+              result.uid = event.serialNumber
+              result.serialNumber = event.serialNumber
             }
 
             // Extract raw data from records
