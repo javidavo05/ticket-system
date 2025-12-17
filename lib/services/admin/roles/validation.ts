@@ -55,8 +55,8 @@ export async function canAssignRole(
     }
   }
 
-  // Validate hierarchy
-  const assignerRole = assignerIsEventAdmin ? ROLES.EVENT_ADMIN : ROLES.USER
+  // Validate hierarchy - assigner is EVENT_ADMIN
+  const assignerRole = ROLES.EVENT_ADMIN
   const hierarchyCheck = validateRoleHierarchy(assignerRole, targetRole)
   if (!hierarchyCheck.valid) {
     return {
