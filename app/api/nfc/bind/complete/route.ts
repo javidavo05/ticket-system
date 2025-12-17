@@ -159,7 +159,8 @@ export async function POST(request: NextRequest) {
         }
 
         // Update band to bind to user
-        await supabase
+        const updateBandClient = await createServiceRoleClient()
+        await (updateBandClient as any)
           .from('nfc_bands')
           .update({
             user_id: user.id,
