@@ -15,26 +15,28 @@ export async function checkPaymentExpiration(paymentId: string): Promise<{
   const supabase = await createServiceRoleClient()
 
   // Get payment
-  const { data: payment, error: paymentError } = await supabase
+  const { data: payment, error: paymentError } = await (supabase
     .from('payments')
     .select('*')
     .eq('id', paymentId)
-    .single()
+    .single() as any)
 
   if (paymentError || !payment) {
     throw new Error(`Payment not found: ${paymentId}`)
   }
 
+  const paymentData = payment as any
+
   // Check if already cancelled or completed
-  if (payment.status === PAYMENT_STATUS.CANCELLED || payment.status === PAYMENT_STATUS.COMPLETED) {
+  if (paymentData.status === PAYMENT_STATUS.CANCELLED || paymentData.status === PAYMENT_STATUS.COMPLETED) {
     return { wasExpired: false, reverted: false }
   }
 
   // Check if expired
   const expired = isPaymentExpired({
-    ...payment,
-    expiresAt: payment.expires_at ? new Date(payment.expires_at) : undefined,
-    createdAt: new Date(payment.created_at),
+    ...paymentData,
+    expiresAt: paymentData.expires_at ? new Date(paymentData.expires_at) : undefined,
+    createdAt: new Date(paymentData.created_at),
   } as any)
 
   if (!expired) {
@@ -50,18 +52,19 @@ export async function checkPaymentExpiration(paymentId: string): Promise<{
   )
 
   // Revert ticket reservations
-  const { data: tickets, error: ticketsError } = await supabase
+  const { data: tickets, error: ticketsError } = await (supabase
     .from('tickets')
     .select('id, ticket_type_id, status')
     .eq('payment_id', paymentId)
-    .in('status', ['pending_payment', 'issued'])
+    .in('status', ['pending_payment', 'issued']) as any)
 
   if (!ticketsError && tickets && tickets.length > 0) {
+    const ticketsData = (tickets || []) as any[]
     // Get ticket types to revert quantity_sold
-    const ticketTypeIds = [...new Set(tickets.map((t) => t.ticket_type_id))]
+    const ticketTypeIds = [...new Set(ticketsData.map((t: any) => t.ticket_type_id))]
 
     for (const ticketTypeId of ticketTypeIds) {
-      const ticketsForType = tickets.filter((t) => t.ticket_type_id === ticketTypeId)
+      const ticketsForType = ticketsData.filter((t: any) => t.ticket_type_id === ticketTypeId)
       const quantity = ticketsForType.length
 
       // Revert quantity_sold
@@ -71,18 +74,19 @@ export async function checkPaymentExpiration(paymentId: string): Promise<{
       })
 
       // Alternative: Direct update if RPC doesn't exist
-      const { data: ticketType } = await supabase
+      const { data: ticketType } = await (supabase
         .from('ticket_types')
         .select('quantity_sold')
         .eq('id', ticketTypeId)
-        .single()
+        .single() as any)
 
       if (ticketType) {
-        const newQuantitySold = Math.max(0, (ticketType.quantity_sold as number) - quantity)
-        await supabase
-          .from('ticket_types')
+        const ticketTypeData = ticketType as any
+        const newQuantitySold = Math.max(0, (ticketTypeData.quantity_sold as number) - quantity)
+        await ((supabase
+          .from('ticket_types') as any)
           .update({ quantity_sold: newQuantitySold })
-          .eq('id', ticketTypeId)
+          .eq('id', ticketTypeId))
       }
     }
 
@@ -90,14 +94,14 @@ export async function checkPaymentExpiration(paymentId: string): Promise<{
     // Option 1: Delete tickets (if they were just reserved)
     // Option 2: Mark as revoked
     // For now, we'll mark them as revoked to maintain audit trail
-    const { error: revokeError } = await supabase
-      .from('tickets')
+    const { error: revokeError } = await ((supabase
+      .from('tickets') as any)
       .update({
         status: 'revoked',
         revoked_at: new Date().toISOString(),
       })
       .eq('payment_id', paymentId)
-      .in('status', ['pending_payment', 'issued'])
+      .in('status', ['pending_payment', 'issued']))
 
     if (revokeError) {
       console.error(`Failed to revoke tickets for expired payment ${paymentId}:`, revokeError)
@@ -106,13 +110,13 @@ export async function checkPaymentExpiration(paymentId: string): Promise<{
     // Log audit event
     await logAuditEvent(
       {
-        userId: null,
+        userId: undefined,
         action: 'payment_expired_tickets_reverted',
         resourceType: 'payment',
         resourceId: paymentId,
-        organizationId: payment.organization_id || undefined,
+        organizationId: paymentData.organization_id || undefined,
         metadata: {
-          ticketCount: tickets.length,
+          ticketCount: ticketsData.length,
           ticketTypeIds: ticketTypeIds,
         },
       },
@@ -136,15 +140,17 @@ export async function extendPaymentExpiration(
   const supabase = await createServiceRoleClient()
 
   // Get payment
-  const { data: payment, error: paymentError } = await supabase
+  const { data: payment, error: paymentError } = await (supabase
     .from('payments')
     .select('*')
     .eq('id', paymentId)
-    .single()
+    .single() as any)
 
   if (paymentError || !payment) {
     throw new Error(`Payment not found: ${paymentId}`)
   }
+
+  const paymentData = payment as any
 
   // Validate new expiration is in the future
   if (newExpirationDate <= new Date()) {
@@ -152,18 +158,18 @@ export async function extendPaymentExpiration(
   }
 
   // Validate new expiration is after current expiration (if exists)
-  if (payment.expires_at && newExpirationDate <= new Date(payment.expires_at)) {
+  if (paymentData.expires_at && newExpirationDate <= new Date(paymentData.expires_at)) {
     throw new Error('New expiration date must be after current expiration date')
   }
 
   // Update expiration
-  const { error: updateError } = await supabase
-    .from('payments')
+  const { error: updateError } = await ((supabase
+    .from('payments') as any)
     .update({
       expires_at: newExpirationDate.toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .eq('id', paymentId)
+    .eq('id', paymentId))
 
   if (updateError) {
     throw new Error(`Failed to extend payment expiration: ${updateError.message}`)
@@ -176,9 +182,9 @@ export async function extendPaymentExpiration(
       action: 'payment_expiration_extended',
       resourceType: 'payment',
       resourceId: paymentId,
-      organizationId: payment.organization_id || undefined,
+      organizationId: paymentData.organization_id || undefined,
       metadata: {
-        oldExpiration: payment.expires_at,
+        oldExpiration: paymentData.expires_at,
         newExpiration: newExpirationDate.toISOString(),
       },
     },
@@ -198,13 +204,13 @@ export async function processExpiredPayments(limit: number = 100): Promise<{
   const now = new Date().toISOString()
 
   // Get expired payments
-  const { data: expiredPayments, error: fetchError } = await supabase
+  const { data: expiredPayments, error: fetchError } = await (supabase
     .from('payments')
     .select('id')
     .eq('status', PAYMENT_STATUS.PENDING)
     .not('expires_at', 'is', null)
     .lte('expires_at', now)
-    .limit(limit)
+    .limit(limit) as any)
 
   if (fetchError) {
     throw new Error(`Failed to fetch expired payments: ${fetchError.message}`)
@@ -214,11 +220,12 @@ export async function processExpiredPayments(limit: number = 100): Promise<{
     return { processed: 0, expired: 0, reverted: 0 }
   }
 
+  const expiredPaymentsData = (expiredPayments || []) as any[]
   let expired = 0
   let reverted = 0
 
   // Process each expired payment
-  for (const payment of expiredPayments) {
+  for (const payment of expiredPaymentsData) {
     try {
       const result = await checkPaymentExpiration(payment.id)
       if (result.wasExpired) {
@@ -233,7 +240,7 @@ export async function processExpiredPayments(limit: number = 100): Promise<{
   }
 
   return {
-    processed: expiredPayments.length,
+    processed: expiredPaymentsData.length,
     expired,
     reverted,
   }
