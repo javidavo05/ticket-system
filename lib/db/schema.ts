@@ -328,6 +328,21 @@ export const paymentItems = pgTable('payment_items', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
+// Payment transactions
+export const paymentTransactions = pgTable('payment_transactions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  paymentId: uuid('payment_id').references(() => payments.id, { onDelete: 'cascade' }).notNull(),
+  transactionType: text('transaction_type').notNull(),
+  amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
+  currency: text('currency').default('USD').notNull(),
+  provider: text('provider').notNull(),
+  providerTransactionId: text('provider_transaction_id'),
+  status: text('status').notNull(),
+  metadata: jsonb('metadata').default({}),
+  organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
 // Wallets
 export const wallets = pgTable('wallets', {
   id: uuid('id').primaryKey().defaultRandom(),
