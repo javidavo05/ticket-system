@@ -113,17 +113,17 @@ export async function getPlatformKPIs(dateRange?: { start: string; end: string }
   const previousKPIs = previousPeriod ? await getPlatformKPIs(previousPeriod) : null
 
   const growthRate = {
-    events: previousKPIs && previousKPIs.totalActiveEvents > 0
-      ? ((totalActiveEvents - previousKPIs.totalActiveEvents) / previousKPIs.totalActiveEvents) * 100
+    events: previousKPIs && previousKPIs.totalActiveEvents && previousKPIs.totalActiveEvents > 0
+      ? ((totalActiveEvents - (previousKPIs.totalActiveEvents || 0)) / (previousKPIs.totalActiveEvents || 1)) * 100
       : 0,
-    tickets: previousKPIs && previousKPIs.totalTicketsSold > 0
-      ? ((totalTicketsSold - previousKPIs.totalTicketsSold) / previousKPIs.totalTicketsSold) * 100
+    tickets: previousKPIs && previousKPIs.totalTicketsSold && previousKPIs.totalTicketsSold > 0
+      ? ((totalTicketsSold - (previousKPIs.totalTicketsSold || 0)) / (previousKPIs.totalTicketsSold || 1)) * 100
       : 0,
-    revenue: previousKPIs && previousKPIs.totalRevenue > 0
-      ? ((totalRevenue - previousKPIs.totalRevenue) / previousKPIs.totalRevenue) * 100
+    revenue: previousKPIs && previousKPIs.totalRevenue && previousKPIs.totalRevenue > 0
+      ? ((totalRevenue - (previousKPIs.totalRevenue || 0)) / (previousKPIs.totalRevenue || 1)) * 100
       : 0,
-    users: previousKPIs && previousKPIs.activeUsers > 0
-      ? ((activeUsers - previousKPIs.activeUsers) / previousKPIs.activeUsers) * 100
+    users: previousKPIs && previousKPIs.activeUsers && previousKPIs.activeUsers > 0
+      ? ((activeUsers - (previousKPIs.activeUsers || 0)) / (previousKPIs.activeUsers || 1)) * 100
       : 0,
   }
 
