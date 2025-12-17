@@ -11,11 +11,11 @@ export async function sendTicketsForPayment(
   const supabase = await createServiceRoleClient()
 
   // Get all tickets for this payment
-  const { data: tickets, error: ticketsError } = await supabase
+  const { data: tickets, error: ticketsError } = await (supabase
     .from('tickets')
     .select('id, purchaser_email, ticket_number')
     .eq('payment_id', paymentId)
-    .in('status', ['paid', 'issued'])
+    .in('status', ['paid', 'issued']) as any)
 
   if (ticketsError) {
     throw new Error(`Failed to fetch tickets: ${ticketsError.message}`)
@@ -25,12 +25,13 @@ export async function sendTicketsForPayment(
     return { sent: 0, failed: 0, errors: [] }
   }
 
+  const ticketsData = (tickets || []) as any[]
   let sent = 0
   let failed = 0
   const errors: string[] = []
 
   // Send email for each ticket
-  for (const ticket of tickets) {
+  for (const ticket of ticketsData) {
     try {
       const result = await sendTicketDeliveryEmail(ticket.id)
 
