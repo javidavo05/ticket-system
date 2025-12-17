@@ -68,3 +68,10 @@ export interface MigrationChange {
   oldValue?: unknown
   newValue?: unknown
 }
+
+export interface CompatibilityIssue {
+  severity: 'error' | 'warning'
+  token: string
+  message: string
+  suggestion?: string
+}
