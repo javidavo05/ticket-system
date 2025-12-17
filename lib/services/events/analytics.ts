@@ -17,36 +17,38 @@ export async function getEventAnalytics(eventId: string): Promise<EventAnalytics
   const supabase = await createServiceRoleClient()
 
   // Get tickets sold
-  const { data: tickets, error: ticketsError } = await supabase
+  const { data: tickets, error: ticketsError } = await (supabase
     .from('tickets')
-    .select('id, status, scan_count, ticket_types!inner(name, price)')
-    .eq('event_id', eventId)
+    .select('id, status, scan_count, payment_id, ticket_type_id, ticket_types!inner(name, price)')
+    .eq('event_id', eventId) as any)
 
   if (ticketsError) {
     throw ticketsError
   }
 
-  const ticketsSold = tickets?.length || 0
-  const ticketsScanned = tickets?.filter(t => t.scan_count > 0).length || 0
-  const attendance = tickets?.filter(t => t.status === 'used').length || 0
+  const ticketsData = (tickets || []) as any[]
+  const ticketsSold = ticketsData.length
+  const ticketsScanned = ticketsData.filter((t: any) => t.scan_count > 0).length
+  const attendance = ticketsData.filter((t: any) => t.status === 'used').length
 
   // Calculate revenue from payments
-  const { data: payments, error: paymentsError } = await supabase
+  const paymentIds = ticketsData.map((t: any) => t.payment_id).filter(Boolean)
+  const { data: payments, error: paymentsError } = await (supabase
     .from('payments')
     .select('amount, status')
     .eq('status', 'completed')
-    .in('id', tickets?.map(t => t.payment_id).filter(Boolean) || [])
+    .in('id', paymentIds.length > 0 ? paymentIds : ['00000000-0000-0000-0000-000000000000']) as any)
 
   if (paymentsError) {
     throw paymentsError
   }
 
-  const revenue = payments?.reduce((sum, p) => sum + parseFloat(p.amount as string), 0) || 0
+  const revenue = ((payments as any[]) || []).reduce((sum, p: any) => sum + parseFloat(p.amount as string), 0) || 0
 
   // Ticket type distribution
   const ticketTypeMap = new Map<string, { name: string; sold: number; revenue: number }>()
 
-  tickets?.forEach(ticket => {
+  ticketsData.forEach((ticket: any) => {
     const ticketType = Array.isArray(ticket.ticket_types) ? ticket.ticket_types[0] : ticket.ticket_types
     if (ticketType) {
       const existing = ticketTypeMap.get(ticket.ticket_type_id) || {
