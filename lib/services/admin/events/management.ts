@@ -1,6 +1,6 @@
 import { createServiceRoleClient } from '@/lib/supabase/server'
-import { canManageEvent, isSuperAdmin } from '@/lib/auth/permissions'
-import { hasRole } from '@/lib/supabase/rls'
+import { canManageEvent } from '@/lib/auth/permissions'
+import { hasRole, isSuperAdmin } from '@/lib/supabase/rls'
 import { ROLES, EVENT_STATUS } from '@/lib/utils/constants'
 import { AuthorizationError, ValidationError } from '@/lib/utils/errors'
 
