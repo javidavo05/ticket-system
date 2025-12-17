@@ -101,7 +101,7 @@ export async function sendTicketDeliveryEmail(
   const supabase = await createServiceRoleClient()
 
   // Fetch ticket and related data
-  const { data: ticket, error: ticketError } = await supabase
+  const { data: ticket, error: ticketError } = await (supabase
     .from('tickets')
     .select(`
       id,
@@ -121,33 +121,34 @@ export async function sendTicketDeliveryEmail(
       )
     `)
     .eq('id', ticketId)
-    .single()
+    .single() as any)
 
   if (ticketError || !ticket) {
     throw new Error(`Ticket not found: ${ticketId}`)
   }
 
-  const event = Array.isArray(ticket.events) ? ticket.events[0] : ticket.events
+  const ticketData = ticket as any
+  const event = Array.isArray(ticketData.events) ? ticketData.events[0] : ticketData.events
   if (!event) {
     throw new Error(`Event not found for ticket: ${ticketId}`)
   }
 
   // Generate QR code image
-  const qrCodeImage = await generateQRCodeImage(ticket.qr_signature)
+  const qrCodeImage = await generateQRCodeImage(ticketData.qr_signature)
 
   // Generate secure ticket URL
   const ticketUrl = await generateTicketUrl(ticketId)
 
   // Format event date
-  const eventDate = format(new Date(event.start_date), 'EEEE, MMMM d, yyyy h:mm a')
+  const eventDate = format(new Date((event as any).start_date), 'EEEE, MMMM d, yyyy h:mm a')
 
   // Prepare template data
   const templateData: TicketEmailData = {
-    ticketNumber: ticket.ticket_number,
-    eventName: event.name,
+    ticketNumber: ticketData.ticket_number,
+    eventName: (event as any).name,
     eventDate: eventDate,
-    eventLocation: event.location_address || event.location_name || 'TBA',
-    purchaserName: ticket.purchaser_name,
+    eventLocation: (event as any).location_address || (event as any).location_name || 'TBA',
+    purchaserName: ticketData.purchaser_name,
     qrCodeImage,
     ticketUrl,
   }
@@ -160,17 +161,17 @@ export async function sendTicketDeliveryEmail(
   // Store email content in metadata for retry purposes
   const result = await sendEmailWithTracking({
     emailType: 'ticket_delivery',
-    to: ticket.purchaser_email,
+    to: ticketData.purchaser_email,
     subject: rendered.subject,
     html: rendered.html,
     text: rendered.text,
-    recipientName: ticket.purchaser_name,
+    recipientName: ticketData.purchaser_name,
     resourceType: 'ticket',
     resourceId: ticketId,
-    organizationId: ticket.organization_id || undefined,
+    organizationId: ticketData.organization_id || undefined,
     metadata: {
-      ticketNumber: ticket.ticket_number,
-      eventName: event.name,
+      ticketNumber: ticketData.ticket_number,
+      eventName: (event as any).name,
       eventId: event.id,
       // Store email content for retry
       subject: rendered.subject,
