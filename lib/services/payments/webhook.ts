@@ -75,7 +75,9 @@ export async function processPaymentWebhook(
   }
 
   // Create payment transaction record
-  const transactionAmount = result.metadata?.amount || parseFloat(paymentData.amount as string)
+  const transactionAmount = typeof result.metadata?.amount === 'number' 
+    ? result.metadata.amount 
+    : parseFloat(paymentData.amount as string)
   const { data: transaction, error: transactionError } = await ((supabase
     .from('payment_transactions') as any)
     .insert({
@@ -320,7 +322,9 @@ export async function processPartialPaymentWebhook(
   }
 
   // Get transaction amount from payload or metadata
-  const transactionAmount = result.metadata?.amount || parseFloat(paymentData.amount as string)
+  const transactionAmount = typeof result.metadata?.amount === 'number' 
+    ? result.metadata.amount 
+    : parseFloat(paymentData.amount as string)
 
   // Create payment transaction
   const { data: transaction, error: transactionError } = await ((supabase
