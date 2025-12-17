@@ -97,13 +97,14 @@ export async function verifySecurityToken(token: string): Promise<NFCTokenPayloa
 
     // Verify token matches stored token in database
     const supabase = await createServiceRoleClient()
-    const { data: band } = await supabase
+    const { data: band } = await (supabase
       .from('nfc_bands')
       .select('security_token')
       .eq('id', nfcPayload.bandId)
-      .single()
+      .single() as any)
 
-    if (!band || band.security_token !== token) {
+    const bandData = band as any
+    if (!bandData || bandData.security_token !== token) {
       throw new Error('Token does not match stored token')
     }
 
