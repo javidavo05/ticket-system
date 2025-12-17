@@ -24,21 +24,30 @@ export async function POST(request: NextRequest) {
     const supabase = await createServiceRoleClient()
 
     // Validate binding token
-    const { data: bindingToken, error: tokenError } = await supabase
+    const { data: bindingTokenData, error: tokenError } = await supabase
       .from('binding_tokens')
       .select('id, user_id, expires_at, used_at')
       .eq('token', validated.token)
       .single()
 
-    if (tokenError || !bindingToken) {
+    if (tokenError || !bindingTokenData) {
       return NextResponse.json(
         { error: 'Invalid binding token' },
         { status: 400 }
       )
     }
 
+    // Type assertion after null check
+    type BindingTokenRow = {
+      id: string
+      user_id: string
+      expires_at: string
+      used_at: string | null
+    }
+    const bindingToken = bindingTokenData as unknown as BindingTokenRow
+
     // Check if token is expired
-    const expiresAt = new Date(bindingToken.expires_at as string)
+    const expiresAt = new Date(bindingToken.expires_at)
     if (expiresAt < new Date()) {
       return NextResponse.json(
         { error: 'Binding token expired' },
