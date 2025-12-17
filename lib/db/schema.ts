@@ -100,7 +100,7 @@ export const events = pgTable('events', {
   locationName: text('location_name'), // Keep for backward compatibility
   locationAddress: text('location_address'), // Keep for backward compatibility
   locationCoordinates: text('location_coordinates'), // Keep for backward compatibility, PostgreSQL point type stored as text
-  themeId: uuid('theme_id').references(() => themes.id as any),
+  themeId: uuid('theme_id').references((): any => themes.id as any),
   status: eventStatusEnum('status').default('draft').notNull(),
   createdBy: uuid('created_by').references(() => users.id).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -113,7 +113,7 @@ export const events = pgTable('events', {
 export const themes = pgTable('themes', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
-  eventId: uuid('event_id').references(() => events.id as any, { onDelete: 'cascade' }),
+  eventId: uuid('event_id').references((): any => events.id as any, { onDelete: 'cascade' }),
   organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }),
   config: jsonb('config').notNull(),
   isActive: boolean('is_active').default(true).notNull(),
