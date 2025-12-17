@@ -114,7 +114,7 @@ export async function processPaymentWebhook(
 
   // Use state machine to transition payment status
   const currentStatus = paymentData.status
-  let targetStatus = result.status
+  let targetStatus: string = result.status
 
   // Map webhook status to payment status
   if (result.status === 'completed') {
