@@ -107,32 +107,35 @@ export async function verifyPaymentReconciliation(paymentId: string): Promise<{
   const errors: string[] = []
 
   // Get payment
-  const { data: payment, error: paymentError } = await supabase
+  const { data: payment, error: paymentError } = await (supabase
     .from('payments')
     .select('id, amount, amount_paid')
     .eq('id', paymentId)
-    .single()
+    .single() as any)
 
   if (paymentError || !payment) {
     errors.push(`Payment not found: ${paymentId}`)
     return { isReconciled: false, errors }
   }
 
+  const paymentData = payment as any
+
   // Get all completed payment transactions
-  const { data: transactions, error: transactionsError } = await supabase
+  const { data: transactions, error: transactionsError } = await (supabase
     .from('payment_transactions')
     .select('amount, transaction_type, status')
     .eq('payment_id', paymentId)
     .eq('status', 'completed')
-    .in('transaction_type', ['payment', 'adjustment'])
+    .in('transaction_type', ['payment', 'adjustment']) as any)
 
   if (transactionsError) {
     errors.push(`Failed to fetch transactions: ${transactionsError.message}`)
     return { isReconciled: false, errors }
   }
 
+  const transactionsData = (transactions || []) as any[]
   // Calculate sum of completed payment transactions
-  const totalFromTransactions = (transactions || []).reduce((sum, txn) => {
+  const totalFromTransactions = transactionsData.reduce((sum, txn: any) => {
     if (txn.transaction_type === 'payment') {
       return sum + parseFloat(txn.amount as string)
     } else if (txn.transaction_type === 'adjustment') {
@@ -142,7 +145,7 @@ export async function verifyPaymentReconciliation(paymentId: string): Promise<{
   }, 0)
 
   // Compare with amount_paid
-  const amountPaid = parseFloat(payment.amount_paid as string)
+  const amountPaid = parseFloat(paymentData.amount_paid as string)
   const discrepancy = Math.abs(amountPaid - totalFromTransactions)
 
   // Allow small discrepancy due to rounding (0.01)
@@ -177,15 +180,16 @@ export async function checkPaymentFraud(
 
   // Check for multiple failed attempts from same user
   if (payment.userId) {
-    const { data: recentFailures } = await supabase
+    const { data: recentFailures } = await (supabase
       .from('payments')
       .select('id')
       .eq('user_id', payment.userId)
       .eq('status', 'failed')
       .gte('created_at', new Date(Date.now() - 3600000).toISOString()) // Last hour
-      .limit(10)
+      .limit(10) as any)
 
-    if (recentFailures && recentFailures.length >= 5) {
+    const recentFailuresData = (recentFailures || []) as any[]
+    if (recentFailuresData.length >= 5) {
       reasons.push('Multiple failed payment attempts in the last hour')
     }
   }
@@ -197,14 +201,15 @@ export async function checkPaymentFraud(
 
   // Check for rapid payments from same IP (if metadata includes IP)
   if (metadata?.ipAddress) {
-    const { data: recentPayments } = await supabase
+    const { data: recentPayments } = await (supabase
       .from('payments')
       .select('id')
       .eq('metadata->>ipAddress', metadata.ipAddress)
       .gte('created_at', new Date(Date.now() - 300000).toISOString()) // Last 5 minutes
-      .limit(10)
+      .limit(10) as any)
 
-    if (recentPayments && recentPayments.length >= 5) {
+    const recentPaymentsData = (recentPayments || []) as any[]
+    if (recentPaymentsData.length >= 5) {
       reasons.push('Multiple payments from same IP in short time')
     }
   }
@@ -231,13 +236,13 @@ export async function logPaymentStateChange(
       action: 'payment_state_change',
       resourceType: 'payment',
       resourceId: payment.id,
-      organizationId: payment.organizationId || undefined,
       changes: {
         from: fromStatus,
         to: toStatus,
         reason: reason || null,
       },
       metadata: {
+        organizationId: payment.organizationId || undefined,
         amount: payment.amount,
         amountPaid: payment.amountPaid,
         provider: payment.provider,
@@ -256,7 +261,7 @@ export async function logPaymentTransaction(
 ): Promise<void> {
   await logAuditEvent(
     {
-      userId: null,
+      userId: undefined,
       action: 'payment_transaction_created',
       resourceType: 'payment_transaction',
       resourceId: transaction.id,
