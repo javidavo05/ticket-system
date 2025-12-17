@@ -66,21 +66,22 @@ export async function checkConcurrentUse(
   const supabase = await createServiceRoleClient()
 
   // Get active usage sessions
-  const { data: activeSessions, error } = await supabase
+  const { data: activeSessions, error } = await (supabase
     .from('nfc_usage_sessions')
     .select('id, location, started_at')
     .eq('nfc_band_id', bandId)
     .is('ended_at', null)
-    .order('started_at', { ascending: false })
+    .order('started_at', { ascending: false }) as any)
 
   if (error || !activeSessions || activeSessions.length === 0) {
     return { hasConcurrentUse: false }
   }
 
+  const sessionsData = (activeSessions || []) as any[]
   const now = new Date()
 
   // Check each active session
-  for (const session of activeSessions) {
+  for (const session of sessionsData) {
     const sessionLocation = parsePoint(session.location as string | null)
     if (!sessionLocation) continue
 
