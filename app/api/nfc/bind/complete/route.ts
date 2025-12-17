@@ -119,13 +119,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Mark token as used (prevent reuse)
-    // Create a fresh query builder to avoid type inference issues
-    const updateQuery = supabase
-      .from('binding_tokens')
-      .update({ used_at: new Date().toISOString() })
-      .eq('id', bindingToken.id)
-    
-    await (updateQuery as any)
+    // Use SQL directly to avoid type inference issues with Supabase client
+    const updateResult = await supabase.rpc('update_binding_token_used', {
+      token_id: bindingToken.id,
+      used_at: new Date().toISOString(),
+    }).catch(async () => {
+      // Fallback to direct SQL if RPC doesn't exist
+      const updateClient = await createServiceRoleClient()
+      return await (updateClient
+        .from('binding_tokens')
+        .update({ used_at: new Date().toISOString() } as any)
+        .eq('id', bindingToken.id) as any)
+    })
 
     let bandId: string
 
