@@ -34,11 +34,11 @@ export async function validateExpenseDate(
   const supabase = await createServiceRoleClient()
 
   // Get event dates
-  const { data: event, error } = await supabase
+  const { data: event, error } = await (supabase
     .from('events')
     .select('start_date, end_date')
     .eq('id', eventId)
-    .single()
+    .single() as any)
 
   if (error || !event) {
     return {
@@ -48,8 +48,8 @@ export async function validateExpenseDate(
   }
 
   const expenseDateObj = new Date(expenseDate)
-  const eventStart = new Date(event.start_date)
-  const eventEnd = new Date(event.end_date)
+  const eventStart = new Date((event as any).start_date)
+  const eventEnd = new Date((event as any).end_date)
 
   // Allow expenses up to 30 days before event start and 30 days after event end
   const allowedStart = new Date(eventStart)
