@@ -50,13 +50,13 @@ export async function checkConflicts(scan: QueuedScan): Promise<ConflictCheckRes
   const alreadyScanned = (existingScans?.length || 0) > 0
 
   // Check 2: Verify ticket current status
-  const { data: ticket } = await supabase
+  const { data: ticket } = await (supabase
     .from('tickets')
     .select('id, status, scan_count')
     .eq('id', ticketId)
-    .single()
+    .single() as any)
 
-  const ticketStatus = ticket?.status || 'unknown'
+  const ticketStatus = (ticket as any)?.status || 'unknown'
   const isRevoked = ticketStatus === 'revoked'
   const isRefunded = ticketStatus === 'refunded'
 
