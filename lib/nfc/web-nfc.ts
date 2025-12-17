@@ -136,25 +136,36 @@ export class WebNFCService {
           reject(new NFCReadError('Tiempo de espera agotado. Acerca la pulsera al teléfono'))
         }, 30000) // 30 second timeout
 
-        reader.addEventListener('reading', (event: NDEFReadingEvent) => {
+        reader.addEventListener('reading', (event: Event | NDEFReadingEvent) => {
           clearTimeout(timeout)
+          
+          // Type guard to ensure it's NDEFReadingEvent
+          if (!('message' in event)) {
+            reject(new NFCReadError('Invalid event type'))
+            return
+          }
+          
+          const nfcEvent = event as NDEFReadingEvent
           
           try {
             const result: NFCReadResult = {
-              records: event.message.records,
+              records: nfcEvent.message.records,
             }
 
             // Try to extract UID from serial number (if available)
-            if (event.serialNumber) {
-              result.uid = event.serialNumber
-              result.serialNumber = event.serialNumber
+            if (nfcEvent.serialNumber) {
+              result.uid = nfcEvent.serialNumber
+              result.serialNumber = nfcEvent.serialNumber
             }
 
             // Extract raw data from records
             const rawDataArrays: Uint8Array[] = []
-            for (const record of event.message.records) {
+            for (const record of nfcEvent.message.records) {
               if (record.data) {
-                rawDataArrays.push(new Uint8Array(record.data))
+                const dataBuffer = typeof record.data === 'string' 
+                  ? new TextEncoder().encode(record.data).buffer 
+                  : record.data
+                rawDataArrays.push(new Uint8Array(dataBuffer))
               }
             }
             if (rawDataArrays.length > 0) {
