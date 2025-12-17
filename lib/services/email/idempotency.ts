@@ -51,32 +51,33 @@ export async function checkEmailSent(
 ): Promise<EmailDelivery | null> {
   const supabase = await createServiceRoleClient()
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase
     .from('email_deliveries')
     .select('*')
     .eq('idempotency_key', idempotencyKey)
     .eq('status', 'sent')
-    .single()
+    .single() as any)
 
   if (error || !data) {
     return null
   }
 
+  const dataRecord = data as any
   return {
-    id: data.id,
-    emailType: data.email_type,
-    recipientEmail: data.recipient_email,
-    recipientName: data.recipient_name || undefined,
-    idempotencyKey: data.idempotency_key,
-    status: data.status as EmailDelivery['status'],
-    provider: data.provider,
-    providerMessageId: data.provider_message_id || undefined,
-    attemptCount: data.attempt_count,
-    maxAttempts: data.max_attempts,
-    lastAttemptAt: data.last_attempt_at || undefined,
-    nextRetryAt: data.next_retry_at || undefined,
-    errorMessage: data.error_message || undefined,
-    errorCode: data.error_code || undefined,
+    id: dataRecord.id,
+    emailType: dataRecord.email_type,
+    recipientEmail: dataRecord.recipient_email,
+    recipientName: dataRecord.recipient_name || undefined,
+    idempotencyKey: dataRecord.idempotency_key,
+    status: dataRecord.status as EmailDelivery['status'],
+    provider: dataRecord.provider,
+    providerMessageId: dataRecord.provider_message_id || undefined,
+    attemptCount: dataRecord.attempt_count,
+    maxAttempts: dataRecord.max_attempts,
+    lastAttemptAt: dataRecord.last_attempt_at || undefined,
+    nextRetryAt: dataRecord.next_retry_at || undefined,
+    errorMessage: dataRecord.error_message || undefined,
+    errorCode: dataRecord.error_code || undefined,
     metadata: (data.metadata as Record<string, any>) || {},
     resourceType: data.resource_type,
     resourceId: data.resource_id,
