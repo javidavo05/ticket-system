@@ -19,8 +19,8 @@ export async function logAuditEvent(
   const ipAddress = request?.ip || request?.headers.get('x-forwarded-for') || null
   const userAgent = request?.headers.get('user-agent') || null
 
-  const { error } = await supabase
-    .from('audit_logs')
+  const { error } = await (supabase
+    .from('audit_logs') as any)
     .insert({
       user_id: data.userId || null,
       action: data.action,
