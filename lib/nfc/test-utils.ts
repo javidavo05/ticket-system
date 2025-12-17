@@ -8,6 +8,7 @@
 import { type NFCReadResult } from './web-nfc'
 import { type NFCPayload } from './payload'
 import { NFCPayloadCodec } from './payload'
+import { type NDEFRecord } from './types'
 
 /**
  * Mock Web NFC API for testing
