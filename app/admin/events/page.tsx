@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertCircle } from 'lucide-react'
 
 export default async function AdminEventsPage() {
-  let events
+  let events: Awaited<ReturnType<typeof getAllEventsForAdmin>>
   try {
     events = await getAllEventsForAdmin()
   } catch (error: any) {
