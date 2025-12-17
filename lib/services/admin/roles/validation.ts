@@ -84,11 +84,11 @@ export async function validateLastSuperAdmin(userId: string): Promise<{
   }
 
   // Count total super admins
-  const { data: superAdmins, error } = await supabase
+  const { data: superAdmins, error } = await (supabase
     .from('user_roles')
     .select('user_id')
     .eq('role', ROLES.SUPER_ADMIN)
-    .is('event_id', null)
+    .is('event_id', null) as any)
 
   if (error) {
     return {
@@ -98,7 +98,7 @@ export async function validateLastSuperAdmin(userId: string): Promise<{
   }
 
   // Get unique super admin user IDs
-  const uniqueSuperAdmins = new Set(superAdmins?.map((r) => r.user_id) || [])
+  const uniqueSuperAdmins = new Set(((superAdmins as any) || []).map((r: any) => r.user_id))
 
   // If this is the only super admin, cannot remove
   if (uniqueSuperAdmins.size === 1 && uniqueSuperAdmins.has(userId)) {
