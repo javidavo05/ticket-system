@@ -68,7 +68,7 @@ export async function checkPaymentExpiration(paymentId: string): Promise<{
       const quantity = ticketsForType.length
 
       // Revert quantity_sold
-      await supabase.rpc('decrement_ticket_type_sold', {
+      await (supabase.rpc as any)('decrement_ticket_type_sold', {
         ticket_type_id: ticketTypeId,
         quantity: quantity,
       })
