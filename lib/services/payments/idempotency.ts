@@ -4,18 +4,19 @@ import { generateIdempotencyKey } from '@/lib/security/crypto'
 export async function checkIdempotency(key: string): Promise<string | null> {
   const supabase = await createServiceRoleClient()
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase
     .from('payments')
     .select('id')
     .eq('idempotency_key', key)
-    .single()
+    .single() as any)
 
   if (error && error.code !== 'PGRST116') {
     // PGRST116 is "not found" - that's fine
     throw error
   }
 
-  return data?.id || null
+  const dataRecord = data as any
+  return dataRecord?.id || null
 }
 
 export async function createIdempotencyKey(): Promise<string> {
