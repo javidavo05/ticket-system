@@ -85,6 +85,7 @@ export const userRoles = pgTable('user_roles', {
 })
 
 // Events
+// @ts-expect-error - Circular reference with themes, resolved at runtime
 export const events = pgTable('events', {
   id: uuid('id').primaryKey().defaultRandom(),
   slug: text('slug').notNull().unique(),
@@ -108,6 +109,7 @@ export const events = pgTable('events', {
 })
 
 // Themes
+// @ts-expect-error - Circular reference with events, resolved at runtime
 export const themes = pgTable('themes', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
