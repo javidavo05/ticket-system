@@ -311,38 +311,40 @@ export async function endUsageSession(sessionToken: string): Promise<void> {
   const supabase = await createServiceRoleClient()
 
   // Get session to get band ID
-  const { data: session } = await supabase
+  const { data: session } = await (supabase
     .from('nfc_usage_sessions')
     .select('nfc_band_id, transaction_count')
     .eq('session_token', sessionToken)
     .is('ended_at', null)
-    .single()
+    .single() as any)
 
   if (!session) {
     return // Session already ended or doesn't exist
   }
 
+  const sessionData = session as any
   // End session
-  await supabase
-    .from('nfc_usage_sessions')
+  await ((supabase
+    .from('nfc_usage_sessions') as any)
     .update({
       ended_at: new Date().toISOString(),
     })
-    .eq('session_token', sessionToken)
+    .eq('session_token', sessionToken))
 
   // Decrease concurrent use count
-  const { data: band } = await supabase
+  const { data: band } = await (supabase
     .from('nfc_bands')
     .select('concurrent_use_count')
-    .eq('id', session.nfc_band_id)
-    .single()
+    .eq('id', sessionData.nfc_band_id)
+    .single() as any)
 
-  if (band && band.concurrent_use_count > 0) {
-    await supabase
-      .from('nfc_bands')
+  const bandData = band as any
+  if (bandData && bandData.concurrent_use_count > 0) {
+    await ((supabase
+      .from('nfc_bands') as any)
       .update({
-        concurrent_use_count: band.concurrent_use_count - 1,
+        concurrent_use_count: bandData.concurrent_use_count - 1,
       })
-      .eq('id', session.nfc_band_id)
+      .eq('id', sessionData.nfc_band_id))
   }
 }
