@@ -111,7 +111,7 @@ export const events = pgTable('events', {
 export const themes = pgTable('themes', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
-  eventId: uuid('event_id').references(() => events.id, { onDelete: 'cascade' }),
+  eventId: uuid('event_id').references((): any => events.id, { onDelete: 'cascade' }),
   organizationId: uuid('organization_id').references(() => organizations.id, { onDelete: 'cascade' }),
   config: jsonb('config').notNull(),
   isActive: boolean('is_active').default(true).notNull(),
