@@ -19,36 +19,38 @@ export async function reconcilePayment(
   const supabase = await createServiceRoleClient()
 
   // Get payment
-  const { data: payment, error: paymentError } = await supabase
+  const { data: payment, error: paymentError } = await (supabase
     .from('payments')
     .select('*')
     .eq('id', paymentId)
-    .single()
+    .single() as any)
 
   if (paymentError || !payment) {
     throw new Error(`Payment not found: ${paymentId}`)
   }
 
+  const paymentData = payment as any
+
   // Find or create payment transaction
-  let { data: transaction } = await supabase
+  let { data: transaction } = await (supabase
     .from('payment_transactions')
     .select('*')
     .eq('provider_transaction_id', providerTransactionId)
-    .single()
+    .single() as any)
 
   if (!transaction) {
     // Create new transaction if not found
-    const { data: newTransaction, error: createError } = await supabase
-      .from('payment_transactions')
+    const { data: newTransaction, error: createError } = await ((supabase
+      .from('payment_transactions') as any)
       .insert({
         payment_id: paymentId,
         transaction_type: 'payment',
         amount: amount.toFixed(2),
-        currency: payment.currency as string,
-        provider: payment.provider as string,
+        currency: paymentData.currency as string,
+        provider: paymentData.provider as string,
         provider_transaction_id: providerTransactionId,
         status: 'completed',
-        organization_id: payment.organization_id || null,
+        organization_id: paymentData.organization_id || null,
         metadata: {
           reconciled: true,
           reconciledBy: confirmedBy,
@@ -56,7 +58,7 @@ export async function reconcilePayment(
         },
       })
       .select()
-      .single()
+      .single())
 
     if (createError || !newTransaction) {
       throw new Error(`Failed to create payment transaction: ${createError?.message}`)
@@ -64,27 +66,29 @@ export async function reconcilePayment(
 
     transaction = newTransaction
   } else {
+    const transactionData = transaction as any
     // Update existing transaction
-    const { error: updateError } = await supabase
-      .from('payment_transactions')
+    const { error: updateError } = await ((supabase
+      .from('payment_transactions') as any)
       .update({
         status: 'completed',
         metadata: {
-          ...((transaction.metadata as Record<string, any>) || {}),
+          ...((transactionData.metadata as Record<string, any>) || {}),
           reconciled: true,
           reconciledBy: confirmedBy,
           reconciledAt: new Date().toISOString(),
         },
       })
-      .eq('id', transaction.id)
+      .eq('id', transactionData.id))
 
     if (updateError) {
       throw new Error(`Failed to update payment transaction: ${updateError.message}`)
     }
   }
 
+  const transactionData = transaction as any
   // Validate amount matches
-  const transactionAmount = parseFloat(transaction.amount as string)
+  const transactionAmount = parseFloat(transactionData.amount as string)
   if (Math.abs(transactionAmount - amount) > 0.01) {
     throw new Error(
       `Amount mismatch: transaction amount (${transactionAmount}) does not match provided amount (${amount})`
@@ -92,11 +96,11 @@ export async function reconcilePayment(
   }
 
   // Calculate new amount_paid
-  const currentAmountPaid = parseFloat(payment.amount_paid as string)
+  const currentAmountPaid = parseFloat(paymentData.amount_paid as string)
   const newAmountPaid = currentAmountPaid + transactionAmount
 
   // Validate new amount_paid doesn't exceed total
-  const totalAmount = parseFloat(payment.amount as string)
+  const totalAmount = parseFloat(paymentData.amount as string)
   if (newAmountPaid > totalAmount) {
     throw new Error(
       `Amount paid (${newAmountPaid}) would exceed total amount (${totalAmount})`
@@ -110,7 +114,7 @@ export async function reconcilePayment(
   }
 
   // Transition to processing if still pending
-  if (payment.status === PAYMENT_STATUS.PENDING) {
+  if (paymentData.status === PAYMENT_STATUS.PENDING) {
     await transitionPayment(paymentId, PAYMENT_STATUS.PROCESSING, 'Payment transaction received', confirmedBy, request)
   }
 
@@ -120,10 +124,10 @@ export async function reconcilePayment(
   }
 
   // Update amount_paid
-  const { error: updateError } = await supabase
-    .from('payments')
+  const { error: updateError } = await ((supabase
+    .from('payments') as any)
     .update(updateData)
-    .eq('id', paymentId)
+    .eq('id', paymentId))
 
   if (updateError) {
     throw new Error(`Failed to update payment: ${updateError.message}`)
@@ -136,8 +140,8 @@ export async function reconcilePayment(
       action: 'payment_reconciled',
       resourceType: 'payment',
       resourceId: paymentId,
-      organizationId: payment.organization_id || undefined,
       metadata: {
+        organizationId: paymentData.organization_id || undefined,
         providerTransactionId,
         amount: transactionAmount,
         newAmountPaid: newAmountPaid,
@@ -161,24 +165,26 @@ export async function reconcileBankTransfer(
   const supabase = await createServiceRoleClient()
 
   // Get payment
-  const { data: payment, error: paymentError } = await supabase
+  const { data: payment, error: paymentError } = await (supabase
     .from('payments')
     .select('*')
     .eq('id', paymentId)
-    .single()
+    .single() as any)
 
   if (paymentError || !payment) {
     throw new Error(`Payment not found: ${paymentId}`)
   }
 
+  const paymentData = payment as any
+
   // Validate payment is bank transfer
-  if (payment.provider !== 'bank_transfer') {
+  if (paymentData.provider !== 'bank_transfer') {
     throw new Error(`Payment is not a bank transfer, cannot reconcile manually`)
   }
 
   // Validate amount matches payment amount (for bank transfers, usually full amount)
-  const totalAmount = parseFloat(payment.amount as string)
-  const remaining = totalAmount - parseFloat(payment.amount_paid as string)
+  const totalAmount = parseFloat(paymentData.amount as string)
+  const remaining = totalAmount - parseFloat(paymentData.amount_paid as string)
 
   if (Math.abs(amount - remaining) > 0.01 && Math.abs(amount - totalAmount) > 0.01) {
     throw new Error(
@@ -187,17 +193,17 @@ export async function reconcileBankTransfer(
   }
 
   // Create payment transaction
-  const { data: transaction, error: transactionError } = await supabase
-    .from('payment_transactions')
+  const { data: transaction, error: transactionError } = await ((supabase
+    .from('payment_transactions') as any)
     .insert({
       payment_id: paymentId,
       transaction_type: 'payment',
       amount: amount.toFixed(2),
-      currency: payment.currency as string,
+      currency: paymentData.currency as string,
       provider: 'bank_transfer',
       provider_transaction_id: referenceNumber,
       status: 'completed',
-      organization_id: payment.organization_id || null,
+      organization_id: paymentData.organization_id || null,
       metadata: {
         referenceNumber,
         manualReconciliation: true,
@@ -206,24 +212,24 @@ export async function reconcileBankTransfer(
       },
     })
     .select()
-    .single()
+    .single())
 
   if (transactionError || !transaction) {
     throw new Error(`Failed to create payment transaction: ${transactionError?.message}`)
   }
 
   // Update payment amount_paid
-  const currentAmountPaid = parseFloat(payment.amount_paid as string)
+  const currentAmountPaid = parseFloat(paymentData.amount_paid as string)
   const newAmountPaid = currentAmountPaid + amount
 
-  const { error: updateError } = await supabase
-    .from('payments')
+  const { error: updateError } = await ((supabase
+    .from('payments') as any)
     .update({
       amount_paid: newAmountPaid.toFixed(2),
       provider_payment_id: referenceNumber,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', paymentId)
+    .eq('id', paymentId))
 
   if (updateError) {
     throw new Error(`Failed to update payment: ${updateError.message}`)
@@ -234,7 +240,7 @@ export async function reconcileBankTransfer(
     await transitionPayment(paymentId, PAYMENT_STATUS.COMPLETED, 'Bank transfer reconciled', confirmedBy, request)
   } else {
     // Transition to processing if partial
-    if (payment.status === PAYMENT_STATUS.PENDING) {
+    if (paymentData.status === PAYMENT_STATUS.PENDING) {
       await transitionPayment(paymentId, PAYMENT_STATUS.PROCESSING, 'Bank transfer partially reconciled', confirmedBy, request)
     }
   }
@@ -246,8 +252,8 @@ export async function reconcileBankTransfer(
       action: 'bank_transfer_reconciled',
       resourceType: 'payment',
       resourceId: paymentId,
-      organizationId: payment.organization_id || undefined,
       metadata: {
+        organizationId: paymentData.organization_id || undefined,
         referenceNumber,
         amount,
         newAmountPaid: newAmountPaid,
