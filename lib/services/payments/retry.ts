@@ -26,20 +26,22 @@ export async function retryPayment(
   const supabase = await createServiceRoleClient()
 
   // Get payment
-  const { data: payment, error: paymentError } = await supabase
+  const { data: payment, error: paymentError } = await (supabase
     .from('payments')
     .select('*')
     .eq('id', paymentId)
-    .single()
+    .single() as any)
 
   if (paymentError || !payment) {
     throw new Error(`Payment not found: ${paymentId}`)
   }
 
+  const paymentData = payment as any
+
   // Validate payment can be retried
   const validation = canRetryPayment({
-    ...payment,
-    status: payment.status as any,
+    ...paymentData,
+    status: paymentData.status as any,
   } as any)
 
   if (!validation.canRetry) {
@@ -50,7 +52,7 @@ export async function retryPayment(
   }
 
   // Check retry attempts in metadata
-  const metadata = (payment.metadata as Record<string, any>) || {}
+  const metadata = (paymentData.metadata as Record<string, any>) || {}
   const retryAttempts = metadata.retryAttempts || 0
 
   if (retryAttempts >= MAX_RETRY_ATTEMPTS) {
@@ -70,8 +72,8 @@ export async function retryPayment(
   )
 
   // Calculate remaining amount
-  const totalAmount = parseFloat(payment.amount as string)
-  const amountPaid = parseFloat(payment.amount_paid as string)
+  const totalAmount = parseFloat(paymentData.amount as string)
+  const amountPaid = parseFloat(paymentData.amount_paid as string)
   const remainingAmount = totalAmount - amountPaid
 
   // Create new payment session
@@ -79,7 +81,7 @@ export async function retryPayment(
     const paymentProvider = getDefaultPaymentProvider()
     const session = await paymentProvider.createPaymentSession({
       amount: remainingAmount,
-      currency: payment.currency as string,
+      currency: paymentData.currency as string,
       description: `Retry payment for ${paymentId}`,
       metadata: {
         ...metadata,
@@ -90,8 +92,8 @@ export async function retryPayment(
     })
 
     // Update payment metadata with retry attempt
-    await supabase
-      .from('payments')
+    await ((supabase
+      .from('payments') as any)
       .update({
         provider_payment_id: session.sessionId,
         metadata: {
@@ -101,17 +103,17 @@ export async function retryPayment(
         },
         updated_at: new Date().toISOString(),
       })
-      .eq('id', paymentId)
+      .eq('id', paymentId))
 
     // Log audit event
     await logAuditEvent(
       {
-        userId: payment.user_id || undefined,
+        userId: paymentData.user_id || undefined,
         action: 'payment_retry',
         resourceType: 'payment',
         resourceId: paymentId,
-        organizationId: payment.organization_id || undefined,
         metadata: {
+          organizationId: paymentData.organization_id || undefined,
           retryAttempt: retryAttempts + 1,
           sessionId: session.sessionId,
         },
@@ -155,16 +157,17 @@ export async function schedulePaymentRetry(
   const retryAt = new Date(Date.now() + delayMinutes * 60 * 1000)
 
   // Store retry schedule in payment metadata
-  const { data: payment } = await supabase
+  const { data: payment } = await (supabase
     .from('payments')
     .select('metadata')
     .eq('id', paymentId)
-    .single()
+    .single() as any)
 
   if (payment) {
-    const metadata = (payment.metadata as Record<string, any>) || {}
-    await supabase
-      .from('payments')
+    const paymentData = payment as any
+    const metadata = (paymentData.metadata as Record<string, any>) || {}
+    await ((supabase
+      .from('payments') as any)
       .update({
         metadata: {
           ...metadata,
@@ -173,7 +176,7 @@ export async function schedulePaymentRetry(
         },
         updated_at: new Date().toISOString(),
       })
-      .eq('id', paymentId)
+      .eq('id', paymentId))
   }
 
   // Note: Actual retry execution would be handled by a cron job
