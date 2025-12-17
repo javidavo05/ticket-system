@@ -121,7 +121,7 @@ export const themes = pgTable('themes', {
   versionHash: text('version_hash'),
   schemaVersion: text('schema_version').default('1.0.0').notNull(),
   isDefault: boolean('is_default').default(false).notNull(),
-  parentThemeId: uuid('parent_theme_id').references(() => themes.id, { onDelete: 'set null' }),
+  parentThemeId: uuid('parent_theme_id').references((): any => themes.id as any, { onDelete: 'set null' }),
   cacheKey: text('cache_key').notNull().unique(),
   publishedAt: timestamp('published_at', { withTimezone: true }),
   deprecatedAt: timestamp('deprecated_at', { withTimezone: true }),
