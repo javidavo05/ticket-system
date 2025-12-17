@@ -10,17 +10,18 @@ export async function validateTicketTypeAvailability(
 ): Promise<{ available: boolean; availableQuantity: number }> {
   const supabase = await createServiceRoleClient()
 
-  const { data: ticketType, error } = await supabase
+  const { data: ticketType, error } = await (supabase
     .from('ticket_types')
     .select('quantity_available, quantity_sold')
     .eq('id', ticketTypeId)
-    .single()
+    .single() as any)
 
   if (error || !ticketType) {
     throw new ValidationError('Tipo de ticket no encontrado')
   }
 
-  const available = ticketType.quantity_available - (ticketType.quantity_sold || 0)
+  const ticketTypeData = ticketType as any
+  const available = ticketTypeData.quantity_available - (ticketTypeData.quantity_sold || 0)
   const availableQuantity = Math.max(0, available)
 
   return {
@@ -38,11 +39,11 @@ export async function canModifyTicketType(ticketTypeId: string): Promise<{
 }> {
   const supabase = await createServiceRoleClient()
 
-  const { data: ticketType, error } = await supabase
+  const { data: ticketType, error } = await (supabase
     .from('ticket_types')
     .select('quantity_sold')
     .eq('id', ticketTypeId)
-    .single()
+    .single() as any)
 
   if (error || !ticketType) {
     return {
@@ -51,8 +52,9 @@ export async function canModifyTicketType(ticketTypeId: string): Promise<{
     }
   }
 
+  const ticketTypeData = ticketType as any
   // Can always modify if no tickets sold
-  if (!ticketType.quantity_sold || ticketType.quantity_sold === 0) {
+  if (!ticketTypeData.quantity_sold || ticketTypeData.quantity_sold === 0) {
     return { canModify: true }
   }
 
@@ -74,11 +76,11 @@ export async function validateTicketTypeDates(
   const supabase = await createServiceRoleClient()
 
   // Get event dates
-  const { data: event, error } = await supabase
+  const { data: event, error } = await (supabase
     .from('events')
     .select('start_date, end_date')
     .eq('id', eventId)
-    .single()
+    .single() as any)
 
   if (error || !event) {
     return {
@@ -87,8 +89,9 @@ export async function validateTicketTypeDates(
     }
   }
 
-  const eventStart = new Date(event.start_date)
-  const eventEnd = new Date(event.end_date)
+  const eventData = event as any
+  const eventStart = new Date(eventData.start_date)
+  const eventEnd = new Date(eventData.end_date)
 
   // Validate sale start
   if (saleStart) {
@@ -150,20 +153,21 @@ export async function canDeleteTicketType(ticketTypeId: string): Promise<{
   const reasons: string[] = []
 
   // Get ticket type
-  const { data: ticketType, error } = await supabase
+  const { data: ticketType, error } = await (supabase
     .from('ticket_types')
     .select('quantity_sold')
     .eq('id', ticketTypeId)
-    .single()
+    .single() as any)
 
   if (error || !ticketType) {
     reasons.push('Tipo de ticket no encontrado')
     return { canDelete: false, reasons }
   }
 
+  const ticketTypeData = ticketType as any
   // Check for sold tickets
-  if (ticketType.quantity_sold && ticketType.quantity_sold > 0) {
-    reasons.push(`Tiene ${ticketType.quantity_sold} tickets vendidos`)
+  if (ticketTypeData.quantity_sold && ticketTypeData.quantity_sold > 0) {
+    reasons.push(`Tiene ${ticketTypeData.quantity_sold} tickets vendidos`)
   }
 
   // Check for pending payment tickets
