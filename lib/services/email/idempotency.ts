@@ -161,10 +161,10 @@ export async function updateEmailDelivery(
   if (updates.errorCode) updateData.error_code = updates.errorCode
   if (updates.sentAt) updateData.sent_at = updates.sentAt.toISOString()
 
-  const { error } = await supabase
-    .from('email_deliveries')
+  const { error } = await ((supabase
+    .from('email_deliveries') as any)
     .update(updateData)
-    .eq('id', deliveryId)
+    .eq('id', deliveryId))
 
   if (error) {
     throw new Error(`Failed to update email delivery: ${error.message}`)
