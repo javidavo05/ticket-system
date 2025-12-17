@@ -138,34 +138,36 @@ export async function detectCloning(
   }
 
   // Check band's concurrent use count
-  const { data: band } = await supabase
+  const { data: band } = await (supabase
     .from('nfc_bands')
     .select('concurrent_use_count, max_concurrent_uses')
     .eq('id', bandId)
-    .single()
+    .single() as any)
 
-  if (band && band.concurrent_use_count > band.max_concurrent_uses) {
+  const bandData = band as any
+  if (bandData && bandData.concurrent_use_count > bandData.max_concurrent_uses) {
     return {
       isCloned: true,
       confidence: 'medium',
-      reason: `Concurrent use count (${band.concurrent_use_count}) exceeds maximum (${band.max_concurrent_uses})`,
+      reason: `Concurrent use count (${bandData.concurrent_use_count}) exceeds maximum (${bandData.max_concurrent_uses})`,
       alerts: ['Concurrent use limit exceeded'],
     }
   }
 
   // Check for rapid location changes
-  const { data: recentSessions } = await supabase
+  const { data: recentSessions } = await (supabase
     .from('nfc_usage_sessions')
     .select('location, started_at, ended_at')
     .eq('nfc_band_id', bandId)
     .order('started_at', { ascending: false })
-    .limit(5)
+    .limit(5) as any)
 
-  if (recentSessions && recentSessions.length > 1) {
+  const sessionsData = (recentSessions || []) as any[]
+  if (sessionsData.length > 1) {
     const alerts: string[] = []
-    for (let i = 0; i < recentSessions.length - 1; i++) {
-      const current = parsePoint(recentSessions[i].location as string | null)
-      const previous = parsePoint(recentSessions[i + 1].location as string | null)
+    for (let i = 0; i < sessionsData.length - 1; i++) {
+      const current = parsePoint(sessionsData[i].location as string | null)
+      const previous = parsePoint(sessionsData[i + 1].location as string | null)
 
       if (current && previous) {
         const distance = calculateDistance(
@@ -176,8 +178,8 @@ export async function detectCloning(
         )
 
         const timeDiff =
-          (new Date(recentSessions[i].started_at).getTime() -
-            new Date(recentSessions[i + 1].started_at).getTime()) /
+          (new Date(sessionsData[i].started_at).getTime() -
+            new Date(sessionsData[i + 1].started_at).getTime()) /
           1000
 
         // If moved > 100m in < 10 seconds, suspicious
