@@ -20,18 +20,24 @@ export async function POST(request: NextRequest) {
     const supabase = await createServiceRoleClient()
 
     // Get band ID from UID
-    const { data: band } = await supabase
+    const { data: bandData } = await supabase
       .from('nfc_bands')
       .select('id')
       .eq('band_uid', validated.bandUid)
       .single()
 
-    if (!band) {
+    if (!bandData) {
       return NextResponse.json(
         { error: 'NFC band not found' },
         { status: 404 }
       )
     }
+
+    // Type assertion for band
+    type NFCBandRow = {
+      id: string
+    }
+    const band = bandData as unknown as NFCBandRow
 
     // If challenge and response provided, complete binding
     if (validated.challenge && validated.response) {
