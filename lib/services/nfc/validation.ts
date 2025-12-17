@@ -22,22 +22,22 @@ export async function validateNFCToken(
 
   // Check if nonce has been used
   const supabase = await createServiceRoleClient()
-  const { data: existingNonce } = await supabase
+  const { data: existingNonce } = await (supabase
     .from('nfc_nonces')
     .select('id')
     .eq('nfc_band_id', payload.bandId)
     .eq('nonce', nonce)
-    .single()
+    .single() as any)
 
   if (existingNonce) {
     throw new ValidationError('Nonce already used (replay attack detected)')
   }
 
   // Store nonce (will be linked to transaction later)
-  await supabase.from('nfc_nonces').insert({
+  await ((supabase.from('nfc_nonces') as any).insert({
     nfc_band_id: payload.bandId,
     nonce,
-  })
+  }))
 
   return payload
 }
@@ -56,16 +56,16 @@ export async function checkRateLimit(bandId: string): Promise<{
   const now = new Date()
 
   // Get or create rate limit record
-  let { data: rateLimit } = await supabase
+  let { data: rateLimit } = await (supabase
     .from('nfc_rate_limits')
     .select('*')
     .eq('nfc_band_id', bandId)
-    .single()
+    .single() as any)
 
   if (!rateLimit) {
     // Create default rate limit
-    const { data: newRateLimit } = await supabase
-      .from('nfc_rate_limits')
+    const { data: newRateLimit } = await ((supabase
+      .from('nfc_rate_limits') as any)
       .insert({
         nfc_band_id: bandId,
         window_start: now.toISOString(),
@@ -74,7 +74,7 @@ export async function checkRateLimit(bandId: string): Promise<{
         window_duration_seconds: DEFAULT_WINDOW_SECONDS,
       })
       .select()
-      .single()
+      .single())
 
     rateLimit = newRateLimit
   }
@@ -90,14 +90,14 @@ export async function checkRateLimit(bandId: string): Promise<{
 
   if (now > windowEnd) {
     // Reset window
-    await supabase
-      .from('nfc_rate_limits')
+    await ((supabase
+      .from('nfc_rate_limits') as any)
       .update({
         window_start: now.toISOString(),
         request_count: 0,
         updated_at: now.toISOString(),
       })
-      .eq('id', rateLimit.id)
+      .eq('id', rateLimit.id))
 
     return {
       allowed: true,
@@ -119,13 +119,13 @@ export async function checkRateLimit(bandId: string): Promise<{
   }
 
   // Increment count
-  await supabase
-    .from('nfc_rate_limits')
+  await ((supabase
+    .from('nfc_rate_limits') as any)
     .update({
       request_count: currentCount + 1,
       updated_at: now.toISOString(),
     })
-    .eq('id', rateLimit.id)
+    .eq('id', rateLimit.id))
 
   return {
     allowed: true,
@@ -157,13 +157,15 @@ export async function validateBandAccess(
   const supabase = await createServiceRoleClient()
 
   // Get band information
-  const { data: band, error } = await supabase
+  const { data: band, error } = await (supabase
     .from('nfc_bands')
     .select('id, user_id, status, event_id, binding_verified_at')
     .eq('id', bandId)
-    .single()
+    .single() as any)
+  
+  const bandData = band as any
 
-  if (error || !band) {
+  if (error || !bandData) {
     return {
       valid: false,
       reason: 'NFC band not found',
@@ -171,28 +173,28 @@ export async function validateBandAccess(
   }
 
   // Check status
-  if (band.status !== 'active') {
+  if (bandData.status !== 'active') {
     return {
       valid: false,
-      userId: band.user_id,
-      reason: `NFC band is ${band.status}`,
+      userId: bandData.user_id,
+      reason: `NFC band is ${bandData.status}`,
     }
   }
 
   // Check binding verification
-  if (!band.binding_verified_at) {
+  if (!bandData.binding_verified_at) {
     return {
       valid: false,
-      userId: band.user_id,
+      userId: bandData.user_id,
       reason: 'NFC band binding not verified',
     }
   }
 
   // Check event access
-  if (band.event_id && band.event_id !== eventId) {
+  if (bandData.event_id && bandData.event_id !== eventId) {
     return {
       valid: false,
-      userId: band.user_id,
+      userId: bandData.user_id,
       reason: 'NFC band not valid for this event',
     }
   }
@@ -204,7 +206,7 @@ export async function validateBandAccess(
     if (cloningCheck.isCloned) {
       return {
         valid: false,
-        userId: band.user_id,
+        userId: bandData.user_id,
         reason: cloningCheck.reason || 'Cloning detected',
         alerts: cloningCheck.alerts,
       }
@@ -227,7 +229,7 @@ export async function validateBandAccess(
 
   return {
     valid: true,
-    userId: band.user_id,
+    userId: bandData.user_id,
     alerts: alerts.length > 0 ? alerts : undefined,
     sessionToken,
   }
