@@ -29,13 +29,6 @@ export async function POST(request: NextRequest) {
     const supabase = await createServiceRoleClient()
 
     // Validate binding token
-    type BindingToken = {
-      id: string
-      user_id: string
-      expires_at: string
-      used_at: string | null
-    }
-
     const { data: bindingTokenData, error: tokenError } = await supabase
       .from('binding_tokens')
       .select('id, user_id, expires_at, used_at')
@@ -49,7 +42,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const bindingToken = bindingTokenData as BindingToken
+    // Type assertion after null check
+    const bindingToken = bindingTokenData as {
+      id: string
+      user_id: string
+      expires_at: string
+      used_at: string | null
+    }
 
     // Check if token is expired
     const expiresAt = new Date(bindingToken.expires_at)
@@ -117,16 +116,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Mark token as used (prevent reuse)
-    const updateResult = await supabase
+    await (supabase
       .from('binding_tokens')
       .update({
         used_at: new Date().toISOString(),
       } as any)
-      .eq('id', bindingToken.id)
-    
-    if (updateResult.error) {
-      console.error('Error marking token as used:', updateResult.error)
-    }
+      .eq('id', bindingToken.id) as any)
 
     let bandId: string
 
