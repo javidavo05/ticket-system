@@ -36,7 +36,7 @@ export class WalletProvider extends PaymentProvider {
 
     return {
       paymentId: data.payment_id,
-      status: this.mapStatus(data.status),
+      status: this.mapStatusForWebhook(data.status),
     }
   }
 
@@ -49,6 +49,17 @@ export class WalletProvider extends PaymentProvider {
 
   private mapStatus(status: string): 'pending' | 'processing' | 'completed' | 'failed' | 'refunded' {
     return status as 'pending' | 'processing' | 'completed' | 'failed' | 'refunded'
+  }
+
+  private mapStatusForWebhook(status: string): 'pending' | 'completed' | 'failed' {
+    const statusMap: Record<string, 'pending' | 'completed' | 'failed'> = {
+      'pending': 'pending',
+      'processing': 'pending', // Map processing to pending for webhook result
+      'completed': 'completed',
+      'failed': 'failed',
+      'refunded': 'failed', // Map refunded to failed for webhook result
+    }
+    return statusMap[status.toLowerCase()] || 'pending'
   }
 }
 
