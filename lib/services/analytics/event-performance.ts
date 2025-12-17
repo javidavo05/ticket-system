@@ -130,7 +130,7 @@ export async function getEventPerformance(
     })
   })
 
-  tickets?.forEach((ticket) => {
+  ticketsData.forEach((ticket: any) => {
     const ticketType = Array.isArray(ticket.ticket_types) ? ticket.ticket_types[0] : ticket.ticket_types
     if (ticketType && (ticket.status === 'paid' || ticket.status === 'used')) {
       const existing = ticketTypeMap.get(ticket.ticket_type_id) || {
