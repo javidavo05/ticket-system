@@ -53,6 +53,25 @@ export default async function TicketPage({ params, searchParams }: PageProps) {
 
   // Fetch ticket data
   const supabase = await createServiceRoleClient()
+  type EventData = {
+    id: string
+    name: string
+    start_date: string
+    end_date: string
+    location_name: string | null
+    location_address: string | null
+  }
+
+  type TicketWithEvent = {
+    id: string
+    ticket_number: string
+    purchaser_name: string
+    purchaser_email: string
+    qr_signature: string
+    status: string
+    events: EventData | EventData[] | null
+  }
+
   const { data: ticket, error: ticketError } = await supabase
     .from('tickets')
     .select(`
@@ -72,35 +91,15 @@ export default async function TicketPage({ params, searchParams }: PageProps) {
       )
     `)
     .eq('id', ticketId)
-    .single()
+    .single() as { data: TicketWithEvent | null; error: any }
 
   if (ticketError || !ticket) {
     notFound()
   }
 
-  // Type assertion for Supabase relation - events can be array or single object
-  type EventData = {
-    id: string
-    name: string
-    start_date: string
-    end_date: string
-    location_name: string | null
-    location_address: string | null
-  }
-
-  const ticketData = ticket as {
-    id: string
-    ticket_number: string
-    purchaser_name: string
-    purchaser_email: string
-    qr_signature: string
-    status: string
-    events: EventData | EventData[] | null
-  }
-
-  const event = Array.isArray(ticketData.events) 
-    ? ticketData.events[0] 
-    : ticketData.events
+  const event = Array.isArray(ticket.events) 
+    ? ticket.events[0] 
+    : ticket.events
   if (!event) {
     notFound()
   }
