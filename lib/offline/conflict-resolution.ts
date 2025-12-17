@@ -39,15 +39,15 @@ export async function checkConflicts(scan: QueuedScan): Promise<ConflictCheckRes
   }
 
   // Check 1: Verify if ticket was already scanned (by this scanner or another)
-  const { data: existingScans } = await supabase
+  const { data: existingScans } = await (supabase
     .from('ticket_scans')
     .select('id, is_valid, created_at')
     .eq('ticket_id', ticketId)
     .eq('is_valid', true)
     .order('created_at', { ascending: false })
-    .limit(1)
+    .limit(1) as any)
 
-  const alreadyScanned = (existingScans?.length || 0) > 0
+  const alreadyScanned = ((existingScans as any)?.length || 0) > 0
 
   // Check 2: Verify ticket current status
   const { data: ticket } = await (supabase
@@ -110,8 +110,8 @@ export async function checkConflicts(scan: QueuedScan): Promise<ConflictCheckRes
   // If already scanned, check if it's a duplicate scan from offline queue
   if (alreadyScanned) {
     // Check if the scan was done after the queued scan timestamp
-    const existingScan = existingScans?.[0]
-    if (existingScan && new Date(existingScan.created_at) > new Date(scan.timestamp)) {
+    const existingScan = (existingScans as any)?.[0]
+    if (existingScan && new Date((existingScan as any).created_at) > new Date(scan.timestamp)) {
       return {
         hasConflict: true,
         resolution: {
