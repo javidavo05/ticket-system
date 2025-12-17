@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_SECONDS * 1000)
 
     // Store token in database
-    const { data: bindingToken, error: insertError } = await supabase
+    const { data: bindingToken, error: insertError } = await (supabase as any)
       .from('binding_tokens')
       .insert({
         token,
