@@ -157,7 +157,7 @@ export async function getEventPerformance(
   // Sales trend (group by day)
   const salesByDate = new Map<string, { ticketsSold: number; revenue: number }>()
 
-  tickets?.forEach((ticket) => {
+  ticketsData.forEach((ticket: any) => {
     if (ticket.status === 'paid' || ticket.status === 'used') {
       const date = new Date(ticket.created_at).toISOString().split('T')[0]
       const existing = salesByDate.get(date) || { ticketsSold: 0, revenue: 0 }
