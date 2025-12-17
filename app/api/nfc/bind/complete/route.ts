@@ -117,12 +117,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Mark token as used (prevent reuse)
-    await supabase
+    const updateResult = await supabase
       .from('binding_tokens')
       .update({
         used_at: new Date().toISOString(),
-      })
+      } as any)
       .eq('id', bindingToken.id)
+    
+    if (updateResult.error) {
+      console.error('Error marking token as used:', updateResult.error)
+    }
 
     let bandId: string
 
