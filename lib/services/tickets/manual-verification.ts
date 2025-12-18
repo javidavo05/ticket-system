@@ -141,14 +141,17 @@ export async function manualValidateTicket(
       resourceType: 'ticket',
       resourceId: ticketId,
       changes: {
-        scanCount: ticket.scan_count + 1,
-        notes: notes || null,
+        scanCount: {
+          before: ticket.scan_count,
+          after: ticket.scan_count + 1,
+        },
       },
       metadata: {
         ticketNumber: ticket.ticket_number,
         eventId: ticket.event_id,
         scanId: scan.id,
         manual: true,
+        notes: notes || null,
       },
     },
     request
