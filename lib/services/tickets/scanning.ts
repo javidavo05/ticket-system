@@ -103,12 +103,12 @@ export async function processScan(
   }
 
   // Mark nonce as used (link it to the scan)
-  await supabase
+  await ((supabase as any)
     .from('ticket_nonces')
     .update({ scan_id: scan.id, used_at: now })
     .eq('ticket_id', validation.ticketId)
     .eq('nonce', nonce)
-    .is('scan_id', null) // Only update if not already used
+    .is('scan_id', null)) // Only update if not already used
 
   // Update ticket scan count and timestamps
   const updateData: {
@@ -125,10 +125,10 @@ export async function processScan(
   }
 
   // Update ticket scan count
-  const { error: updateError } = await supabase
+  const { error: updateError } = await ((supabase as any)
     .from('tickets')
     .update(updateData)
-    .eq('id', validation.ticketId)
+    .eq('id', validation.ticketId))
 
   if (updateError) {
     console.error('Error updating ticket:', updateError)
