@@ -27,7 +27,8 @@ export async function batchGetThemes(themeIds: string[]): Promise<Map<string, Th
     }
 
     const themeMap = new Map<string, Theme>()
-    for (const theme of themes || []) {
+    const themesData = (themes || []) as any[]
+    for (const theme of themesData) {
       const mapped = mapThemeFromDB(theme)
       themeMap.set(theme.id, mapped)
     }
