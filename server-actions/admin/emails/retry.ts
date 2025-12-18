@@ -18,7 +18,7 @@ export async function retryEmailDeliveryAction(deliveryId: string) {
     headers: headersList,
   })
 
-  const result = await retryEmailDelivery(deliveryId, request)
+  const result = await retryEmailDelivery(deliveryId, request as any)
 
   if (!result.success) {
     throw new ValidationError(result.error || 'Failed to retry email delivery')
