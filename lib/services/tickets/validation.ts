@@ -67,7 +67,7 @@ export async function validateTicketWithReplayPrevention(
   }
 
   // Step 3: Fetch ticket and related data
-  const { data: ticket, error } = await supabase
+  const { data: ticketData, error } = await (supabase
     .from('tickets')
     .select(`
       id,
@@ -92,7 +92,9 @@ export async function validateTicketWithReplayPrevention(
     `)
     .eq('id', payload.ticketId)
     .eq('qr_signature', qrSignature)
-    .single()
+    .single() as any)
+
+  const ticket = ticketData as any
 
   if (error || !ticket) {
     return {
