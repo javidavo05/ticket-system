@@ -109,15 +109,17 @@ export async function revokeTicketsByEvent(
 export async function canRevokeTicket(ticketId: string): Promise<boolean> {
   const supabase = await createServiceRoleClient()
 
-  const { data: ticket, error } = await supabase
+  const { data: ticketData, error } = await (supabase
     .from('tickets')
     .select('status')
     .eq('id', ticketId)
-    .single()
+    .single() as any)
 
-  if (error || !ticket) {
+  if (error || !ticketData) {
     return false
   }
+
+  const ticket = ticketData as any
 
   // Can revoke if not already in terminal state
   return (
