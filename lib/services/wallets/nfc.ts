@@ -101,11 +101,13 @@ export async function validateBandAccess(
 ): Promise<{ valid: boolean; userId?: string; reason?: string; alerts?: string[] }> {
   const supabase = await createServiceRoleClient()
 
-  const { data: band, error } = await supabase
+  const { data: bandData, error } = await (supabase
     .from('nfc_bands')
     .select('id, user_id, status, event_id')
     .eq('band_uid', bandUid)
-    .single()
+    .single() as any)
+
+  const band = bandData as any
 
   if (error || !band) {
     return {
