@@ -39,7 +39,7 @@ export async function registerBand(
   }
 
   // Register band
-  const { data: band, error } = await supabase
+  const { data: bandData, error } = await ((supabase as any)
     .from('nfc_bands')
     .insert({
       band_uid: bandUid,
@@ -49,7 +49,9 @@ export async function registerBand(
       status: 'active',
     })
     .select()
-    .single()
+    .single())
+
+  const band = bandData as any
 
   if (error || !band) {
     throw new Error(`Failed to register NFC band: ${error?.message}`)
@@ -64,7 +66,7 @@ export async function registerBand(
   }
 
   // Initialize rate limit
-  await supabase.from('nfc_rate_limits').insert({
+  await ((supabase as any).from('nfc_rate_limits').insert({
     nfc_band_id: band.id,
     window_start: new Date().toISOString(),
     request_count: 0,
