@@ -80,7 +80,7 @@ export async function createEvent(formData: FormData) {
         name: validated.name,
       },
     },
-    request
+    request as any
   )
 
   return event
