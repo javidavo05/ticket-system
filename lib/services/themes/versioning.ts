@@ -55,7 +55,7 @@ export async function createThemeVersion(
   }
 
   // Create version record
-  const { data: version, error: versionError } = await supabase
+  const { data: version, error: versionError } = await ((supabase as any)
     .from('theme_versions')
     .insert({
       theme_id: themeId,
@@ -66,7 +66,7 @@ export async function createThemeVersion(
       created_by: createdBy || null,
     })
     .select()
-    .single()
+    .single())
 
   if (versionError || !version) {
     throw new Error(`Failed to create theme version: ${versionError?.message}`)
