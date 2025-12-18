@@ -27,11 +27,13 @@ export async function deleteEvent(eventId: string) {
   const supabase = await createServiceRoleClient()
 
   // Get event before deletion for audit
-  const { data: event } = await supabase
+  const { data: eventData } = await ((supabase as any)
     .from('events')
     .select('id, name, slug')
     .eq('id', eventId)
-    .single()
+    .single())
+
+  const event = eventData as any
 
   if (!event) {
     throw new ValidationError('Evento no encontrado')
