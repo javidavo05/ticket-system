@@ -193,11 +193,13 @@ export async function addBalance(
     // If it's a duplicate key error, the transaction was already created
     if (transactionError.code === '23505') {
       // Unique constraint violation - transaction already exists
-      const { data: existingTransaction } = await supabase
+      const { data: existingTransactionData } = await (supabase
         .from('wallet_transactions')
         .select('id, balance_after')
         .eq('idempotency_key', finalIdempotencyKey)
-        .single()
+        .single() as any)
+
+      const existingTransaction = existingTransactionData as any
 
       if (existingTransaction) {
         return {
@@ -352,11 +354,13 @@ export async function deductBalance(
     // If it's a duplicate key error, the transaction was already created
     if (transactionError.code === '23505') {
       // Unique constraint violation - transaction already exists
-      const { data: existingTransaction } = await supabase
+      const { data: existingTransactionData } = await (supabase
         .from('wallet_transactions')
         .select('id, balance_after')
         .eq('idempotency_key', finalIdempotencyKey)
-        .single()
+        .single() as any)
+
+      const existingTransaction = existingTransactionData as any
 
       if (existingTransaction) {
         return {
