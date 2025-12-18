@@ -210,17 +210,19 @@ export async function processNFCPayment(
 export async function getBandsByUser(userId: string): Promise<NFCBand[]> {
   const supabase = await createServiceRoleClient()
 
-  const { data: bands, error } = await supabase
+  const { data: bandsData, error } = await ((supabase as any)
     .from('nfc_bands')
     .select('*')
     .eq('user_id', userId)
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false }))
+
+  const bands = (bandsData || []) as any[]
 
   if (error) {
     throw error
   }
 
-  return (bands || []).map(b => ({
+  return bands.map((b: any) => ({
     id: b.id,
     bandUid: b.band_uid,
     userId: b.user_id,
