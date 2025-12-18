@@ -103,7 +103,7 @@ export async function createEventExpense(eventId: string, data: {
         amount: validated.amount,
       },
     },
-    request
+    request as any
   )
 
   return expense
