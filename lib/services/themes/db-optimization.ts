@@ -72,7 +72,7 @@ export async function prefetchThemeContext(
 
       // Prefetch organization theme if organizationId provided
       if (context.organizationId) {
-        const { data: orgTheme } = await supabase
+        const { data: orgThemeData } = await (supabase
           .from('themes')
           .select('id')
           .eq('organization_id', context.organizationId)
@@ -80,7 +80,9 @@ export async function prefetchThemeContext(
           .eq('is_active', true)
           .is('deprecated_at', null)
           .limit(1)
-          .single()
+          .single() as any)
+
+        const orgTheme = orgThemeData as any
 
         if (orgTheme?.id) {
           themeIds.push(orgTheme.id)
