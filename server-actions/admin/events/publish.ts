@@ -27,12 +27,12 @@ export async function publishEvent(eventId: string) {
   const supabase = await createServiceRoleClient()
 
   // Update status to published
-  const { data: event, error: updateError } = await supabase
+  const { data: event, error: updateError } = await ((supabase as any)
     .from('events')
     .update({
       status: EVENT_STATUS.PUBLISHED,
       updated_at: new Date().toISOString(),
-    })
+    }))
     .eq('id', eventId)
     .select()
     .single()
