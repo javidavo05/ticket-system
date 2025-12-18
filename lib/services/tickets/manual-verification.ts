@@ -65,7 +65,7 @@ export async function manualValidateTicket(
   // Create manual scan record
   const scanLocation = location ? `(${location.lng},${location.lat})` : null
 
-  const { data: scan, error: scanError } = await supabase
+  const { data: scan, error: scanError } = await ((supabase as any)
     .from('ticket_scans')
     .insert({
       ticket_id: ticketId,
@@ -81,7 +81,7 @@ export async function manualValidateTicket(
       },
     })
     .select()
-    .single()
+    .single())
 
   if (scanError) {
     throw new Error(`Failed to create scan record: ${scanError.message}`)
