@@ -38,10 +38,10 @@ export async function deleteEvent(eventId: string) {
   }
 
   // Soft delete
-  const { error: deleteError } = await supabase
+  const { error: deleteError } = await ((supabase as any)
     .from('events')
     .update({ deleted_at: new Date().toISOString() })
-    .eq('id', eventId)
+    .eq('id', eventId))
 
   if (deleteError) {
     throw new ValidationError(`Error al eliminar evento: ${deleteError.message}`)
