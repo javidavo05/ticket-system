@@ -12,7 +12,7 @@ export async function getEventByIdForAdmin(eventId: string) {
   const supabase = await createServiceRoleClient()
 
   // Get event with all relations
-  const { data: event, error } = await supabase
+  const { data: eventData, error } = await ((supabase as any)
     .from('events')
     .select(`
       *,
@@ -41,7 +41,9 @@ export async function getEventByIdForAdmin(eventId: string) {
     `)
     .eq('id', eventId)
     .is('deleted_at', null)
-    .single()
+    .single())
+
+  const event = eventData as any
 
   if (error || !event) {
     throw new NotFoundError('Event')
