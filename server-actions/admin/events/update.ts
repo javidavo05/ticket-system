@@ -60,8 +60,9 @@ export async function updateEvent(eventId: string, data: {
   }
 
   // Validate state transition if changing status
-  if (validated.status && validated.status !== currentEvent.status) {
-    const transition = validateEventStateTransition(currentEvent.status, validated.status)
+  const validatedWithStatus = validated as any
+  if (validatedWithStatus.status && validatedWithStatus.status !== currentEvent.status) {
+    const transition = validateEventStateTransition(currentEvent.status, validatedWithStatus.status)
     if (!transition.valid) {
       throw new ValidationError(transition.error || 'Transición de estado inválida')
     }
