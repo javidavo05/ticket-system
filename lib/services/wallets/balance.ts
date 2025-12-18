@@ -157,8 +157,8 @@ export async function addBalance(
       balance: newBalance.toFixed(2),
       updated_at: new Date().toISOString(),
     })
-    .eq('id', walletTyped.id))
-    .eq('balance', wallet.balance) // Optimistic locking
+    .eq('id', walletTyped.id)
+    .eq('balance', walletTyped.balance)) // Optimistic locking
 
   if (updateError) {
     throw new Error('Failed to update wallet balance')
