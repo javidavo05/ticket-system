@@ -121,7 +121,7 @@ export async function processNFCPayment(
   eventId: string,
   token?: string,
   nonce?: string,
-  location?: { lat: number; lng: number }
+  location?: { lat?: number; lng?: number }
 ): Promise<{ transactionId: string; newBalance: number }> {
   const supabase = await createServiceRoleClient()
 
