@@ -174,7 +174,7 @@ export async function processNFCPayment(
   )
 
   // Record NFC transaction
-  const { data: transaction, error: txError } = await supabase
+  const { data: transaction, error: txError } = await ((supabase as any)
     .from('nfc_transactions')
     .insert({
       nfc_band_id: band.id,
@@ -184,7 +184,7 @@ export async function processNFCPayment(
       amount: amount.toFixed(2),
     })
     .select('id')
-    .single()
+    .single())
 
   if (txError || !transaction) {
     throw new Error(`Failed to record NFC transaction: ${txError?.message}`)
