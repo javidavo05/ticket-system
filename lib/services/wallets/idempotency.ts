@@ -9,18 +9,18 @@ import { generateIdempotencyKey } from '@/lib/security/crypto'
 export async function checkWalletTransactionIdempotency(key: string): Promise<string | null> {
   const supabase = await createServiceRoleClient()
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase
     .from('wallet_transactions')
     .select('id')
     .eq('idempotency_key', key)
-    .single()
+    .single() as any)
 
   if (error && error.code !== 'PGRST116') {
     // PGRST116 is "not found" - that's fine
     throw error
   }
 
-  return data?.id || null
+  return (data as any)?.id || null
 }
 
 /**
