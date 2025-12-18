@@ -66,16 +66,17 @@ export async function transitionTicket(
   const supabase = await createServiceRoleClient()
 
   // Get current ticket state
-  const { data: ticket, error: fetchError } = await supabase
+  const { data: ticketData, error: fetchError } = await (supabase
     .from('tickets')
     .select('status, ticket_number, event_id')
     .eq('id', ticketId)
-    .single()
+    .single() as any)
 
-  if (fetchError || !ticket) {
+  if (fetchError || !ticketData) {
     throw new Error(`Ticket not found: ${ticketId}`)
   }
 
+  const ticket = ticketData as any
   const currentStatus = ticket.status
 
   // Validate transition
