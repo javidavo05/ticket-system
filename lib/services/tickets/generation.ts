@@ -99,10 +99,10 @@ export async function generateTicket(params: TicketGenerationParams): Promise<st
   }
 
   // Store nonce in ticket_nonces table for replay prevention
-  const { error: nonceError } = await supabase.from('ticket_nonces').insert({
+  const { error: nonceError } = await ((supabase as any).from('ticket_nonces').insert({
     ticket_id: ticket.id,
     nonce: nonce,
-  })
+  }))
 
   if (nonceError) {
     // Non-critical error, log but don't fail ticket creation
