@@ -81,14 +81,14 @@ async function createSuperAdmin() {
 
     // Paso 2: Crear registro en tabla users
     console.log('2️⃣ Creando registro en tabla users...')
-    const { error: userError } = await supabase
+    const { error: userError } = await ((supabase as any)
       .from('users')
       .insert({
         id: userId,
         email: email,
         full_name: 'Super Admin',
         wallet_balance: '0',
-      })
+      }))
 
     if (userError) {
       // Si el error es que ya existe, continuar
