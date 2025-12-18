@@ -7,12 +7,14 @@ import { ROLES } from '@/lib/utils/constants'
 export async function getUserOrganizationId(userId: string): Promise<string | null> {
   const supabase = await createServiceRoleClient()
   
-  const { data, error } = await supabase
+  const { data: userData, error } = await ((supabase as any)
     .from('users')
     .select('organization_id')
     .eq('id', userId)
     .is('deleted_at', null)
-    .single()
+    .single())
+
+  const data = userData as any
 
   if (error || !data) {
     return null
