@@ -110,8 +110,13 @@ export async function updateEvent(eventId: string, data: {
       resourceType: 'event',
       resourceId: eventId,
       changes: {
-        before: currentEvent,
-        after: updateData,
+        ...Object.keys(updateData).reduce((acc, key) => {
+          acc[key] = {
+            before: (currentEvent as any)[key],
+            after: updateData[key],
+          }
+          return acc
+        }, {} as Record<string, { before: unknown; after: unknown }>),
       },
     },
     request
