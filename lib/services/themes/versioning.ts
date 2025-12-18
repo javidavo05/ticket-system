@@ -27,15 +27,17 @@ export async function createThemeVersion(
   const supabase = await createServiceRoleClient()
 
   // Get current theme
-  const { data: currentTheme, error: themeError } = await supabase
+  const { data: currentThemeData, error: themeError } = await (supabase
     .from('themes')
     .select('version')
     .eq('id', themeId)
-    .single()
+    .single() as any)
 
-  if (themeError || !currentTheme) {
+  if (themeError || !currentThemeData) {
     throw new NotFoundError('Theme')
   }
+
+  const currentTheme = currentThemeData as any
 
   const newVersion = (currentTheme.version as number) + 1
   const versionHash = await calculateVersionHash(config)
