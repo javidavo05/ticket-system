@@ -247,7 +247,7 @@ export function sanitizeThemeConfig(config: ThemeConfig): SanitizedThemeConfig {
             : undefined,
         }
       : undefined,
-  }
+  } as any as ThemeConfig['colors']
 
   // Sanitize typography
   const sanitizedTypography: ThemeConfig['typography'] = {
