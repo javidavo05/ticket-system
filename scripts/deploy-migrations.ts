@@ -16,7 +16,7 @@
 
 import { readdir, readFile } from 'fs/promises'
 import { join } from 'path'
-import { Client } from 'postgres'
+import postgres from 'postgres'
 
 const MIGRATIONS_DIR = join(process.cwd(), 'lib/db/migrations')
 
@@ -137,7 +137,7 @@ async function main() {
 
   // Parse connection string
   const url = new URL(directUrl.replace(/^postgresql:\/\//, 'https://'))
-  const client = new Client({
+  const client = postgres({
     host: url.hostname,
     port: parseInt(url.port) || 5432,
     database: url.pathname.slice(1) || 'postgres',

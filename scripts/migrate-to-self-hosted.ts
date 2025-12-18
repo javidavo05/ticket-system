@@ -16,7 +16,7 @@
  *   tsx scripts/migrate-to-self-hosted.ts --phase=cutover
  */
 
-import { Client } from 'postgres'
+import postgres from 'postgres'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 
@@ -161,7 +161,7 @@ async function setupPhase(config: MigrationConfig): Promise<void> {
     process.exit(1)
   }
 
-  const selfHostedClient = new Client({
+  const selfHostedClient = postgres({
     connectionString: config.selfHostedUrl,
   })
 
@@ -227,7 +227,7 @@ async function verifyPhase(config: MigrationConfig): Promise<void> {
     connectionString: config.supabaseUrl,
   })
 
-  const selfHostedClient = new Client({
+  const selfHostedClient = postgres({
     connectionString: config.selfHostedUrl,
   })
 
