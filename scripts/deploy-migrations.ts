@@ -39,7 +39,7 @@ async function getMigrationFiles(): Promise<string[]> {
     })
 }
 
-async function runMigration(client: Client, filename: string): Promise<MigrationResult> {
+async function runMigration(client: ReturnType<typeof postgres>, filename: string): Promise<MigrationResult> {
   const startTime = Date.now()
   const filepath = join(MIGRATIONS_DIR, filename)
 

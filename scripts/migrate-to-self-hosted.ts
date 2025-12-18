@@ -223,7 +223,7 @@ async function verifyPhase(config: MigrationConfig): Promise<void> {
     process.exit(1)
   }
 
-  const supabaseClient = new Client({
+  const supabaseClient = postgres({
     connectionString: config.supabaseUrl,
   })
 
