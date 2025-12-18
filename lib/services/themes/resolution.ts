@@ -30,7 +30,7 @@ export function getDefaultSystemTheme(): Theme {
 /**
  * Map database theme to domain model
  */
-function mapThemeFromDB(dbTheme: any): Theme {
+export function mapThemeFromDB(dbTheme: any): Theme {
   return {
     id: dbTheme.id,
     name: dbTheme.name,
