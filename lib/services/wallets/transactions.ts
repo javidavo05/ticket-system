@@ -142,18 +142,20 @@ export async function getLedgerHistory(
 ): Promise<WalletTransaction[]> {
   const supabase = await createServiceRoleClient()
 
-  const { data: transactions, error } = await supabase
+  const { data: transactionsData, error } = await ((supabase as any)
     .from('wallet_transactions')
     .select('*')
     .eq('wallet_id', walletId)
     .order('sequence_number', { ascending: false })
-    .range(offset, offset + limit - 1)
+    .range(offset, offset + limit - 1))
+
+  const transactions = (transactionsData || []) as any[]
 
   if (error) {
     throw error
   }
 
-  return (transactions || []).map(t => ({
+  return transactions.map((t: any) => ({
     id: t.id,
     transactionType: t.transaction_type as 'credit' | 'debit',
     amount: parseFloat(t.amount as string),
