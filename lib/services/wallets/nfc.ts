@@ -72,7 +72,7 @@ export async function registerBand(
     request_count: 0,
     max_requests: 10,
     window_duration_seconds: 60,
-  })
+  }))
 
   return band.id
 }
