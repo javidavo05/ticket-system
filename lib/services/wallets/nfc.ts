@@ -23,11 +23,13 @@ export async function registerBand(
   const supabase = await createServiceRoleClient()
 
   // Check if band is already registered
-  const { data: existing } = await supabase
+  const { data: existingData } = await (supabase
     .from('nfc_bands')
     .select('id, user_id')
     .eq('band_uid', bandUid)
-    .single()
+    .single() as any)
+
+  const existing = existingData as any
 
   if (existing) {
     if (existing.user_id !== userId) {
