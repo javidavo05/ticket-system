@@ -353,5 +353,5 @@ export function sanitizeThemeConfig(config: ThemeConfig): SanitizedThemeConfig {
     layout: sanitizedLayout,
     animations: sanitizedAnimations,
     assets: sanitizedAssets,
-  }
+  } as ThemeConfig
 }
