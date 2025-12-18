@@ -146,7 +146,7 @@ export async function validateBandAccess(
   bandId: string,
   eventId: string,
   zoneId?: string,
-  location?: { lat: number; lng: number }
+  location?: { lat?: number; lng?: number }
 ): Promise<{
   valid: boolean
   userId?: string
@@ -249,7 +249,7 @@ export async function validateNFCRequest(
   nonce: string,
   eventId: string,
   zoneId?: string,
-  location?: { lat: number; lng: number }
+  location?: { lat?: number; lng?: number }
 ): Promise<{
   valid: boolean
   userId?: string
