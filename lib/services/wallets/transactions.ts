@@ -108,12 +108,14 @@ export async function getTransactionById(transactionId: string, userId: string):
 export async function getEventWalletBalance(userId: string, eventId: string): Promise<number> {
   const supabase = await createServiceRoleClient()
 
-  const { data: wallet, error } = await supabase
+  const { data: walletData, error } = await ((supabase as any)
     .from('wallets')
     .select('balance')
     .eq('user_id', userId)
     .eq('event_id', eventId)
-    .single()
+    .single())
+
+  const wallet = walletData as any
 
   if (error && error.code !== 'PGRST116') {
     throw error
