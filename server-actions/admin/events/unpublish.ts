@@ -37,12 +37,12 @@ export async function unpublishEvent(eventId: string) {
   }
 
   // Update status to draft
-  const { data: event, error: updateError } = await supabase
+  const { data: event, error: updateError } = await ((supabase as any)
     .from('events')
     .update({
       status: EVENT_STATUS.DRAFT,
       updated_at: new Date().toISOString(),
-    })
+    }))
     .eq('id', eventId)
     .select()
     .single()
