@@ -93,16 +93,18 @@ export async function publishThemeVersion(
   const supabase = await createServiceRoleClient()
 
   // Get version
-  const { data: versionData, error: versionError } = await supabase
+  const { data: versionDataRaw, error: versionError } = await (supabase
     .from('theme_versions')
     .select('*')
     .eq('theme_id', themeId)
     .eq('version', version)
-    .single()
+    .single() as any)
 
-  if (versionError || !versionData) {
+  if (versionError || !versionDataRaw) {
     throw new NotFoundError('Theme version')
   }
+
+  const versionData = versionDataRaw as any
 
   // Update theme with new version
   const { data: updatedTheme, error: updateError } = await ((supabase as any)
