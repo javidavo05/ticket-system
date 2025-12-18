@@ -116,13 +116,13 @@ async function createSuperAdmin() {
     if (existingRole) {
       console.log('⚠️  El usuario ya tiene el rol super_admin\n')
     } else {
-      const { error: roleError } = await supabase
+      const { error: roleError } = await ((supabase as any)
         .from('user_roles')
         .insert({
           user_id: userId,
           role: ROLES.SUPER_ADMIN,
           event_id: null, // Rol global, no específico de evento
-        })
+        }))
 
       if (roleError) {
         throw roleError
