@@ -100,7 +100,7 @@ export async function checkWalletSequenceGaps(walletId: string): Promise<{
 }> {
   const supabase = await createServiceRoleClient()
 
-  const { data, error } = await supabase.rpc('check_wallet_sequence_gaps', {
+  const { data, error } = await (supabase as any).rpc('check_wallet_sequence_gaps', {
     wallet_uuid: walletId,
   })
 
