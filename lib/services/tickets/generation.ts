@@ -86,13 +86,13 @@ export async function generateTicket(params: TicketGenerationParams): Promise<st
   }
 
   // Update ticket with QR signature and payload
-  const { error: updateError } = await supabase
+  const { error: updateError } = await ((supabase as any)
     .from('tickets')
     .update({
       qr_signature: qrSignature,
       qr_payload: qrPayload,
     })
-    .eq('id', ticket.id)
+    .eq('id', ticket.id))
 
   if (updateError) {
     throw new Error(`Failed to update ticket QR: ${updateError.message}`)
