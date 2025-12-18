@@ -30,7 +30,7 @@ export function canTransition(from: string, to: string): boolean {
   }
 
   // Terminal states cannot transition
-  if (TERMINAL_STATES.includes(from)) {
+  if (TERMINAL_STATES.includes(from as any)) {
     return false
   }
 
