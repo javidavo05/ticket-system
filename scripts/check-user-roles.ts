@@ -63,9 +63,10 @@ async function checkUserRoles(email?: string) {
     }
 
     // Verificar en Supabase Auth
-    const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers()
+    const { data: authUsersData, error: authError } = await supabase.auth.admin.listUsers()
+    const authUsers = authUsersData as any
     if (!authError) {
-      const authUser = authUsers.users.find(u => u.email === email)
+      const authUser = (authUsers?.users || []).find((u: any) => u.email === email)
       if (authUser) {
         console.log('\n✅ Usuario existe en Supabase Auth')
         console.log('   Email confirmado:', authUser.email_confirmed_at ? 'Sí' : 'No')
