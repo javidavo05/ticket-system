@@ -48,14 +48,14 @@ export async function processScan(
   if (!validation.isValid) {
     // Record invalid scan (only if we have a ticket ID)
     if (validation.ticketId) {
-      await supabase.from('ticket_scans').insert({
+      await ((supabase as any).from('ticket_scans').insert({
         ticket_id: validation.ticketId,
         scanned_by: scannerId,
         scan_location: location ? `(${location.lng},${location.lat})` : null,
         scan_method: 'qr',
         is_valid: false,
         rejection_reason: validation.rejectionReason,
-      })
+      }))
 
       await logAuditEvent(
         {
