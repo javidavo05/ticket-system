@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       validated.nonce,
       validated.eventId,
       undefined,
-      validated.location
+      validated.location as { lat: number; lng: number } | undefined
     )
 
     if (!validation.valid) {
