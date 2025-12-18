@@ -117,17 +117,26 @@ export async function checkConcurrentUse(
  */
 export async function detectCloning(
   bandId: string,
-  currentLocation: { lat: number; lng: number }
+  currentLocation?: { lat?: number; lng?: number }
 ): Promise<{
   isCloned: boolean
-  confidence: 'low' | 'medium' | 'high'
+  confidence: 'low' | 'medium' | 'high' | 'none'
   reason?: string
   alerts?: string[]
 }> {
   const supabase = await createServiceRoleClient()
 
+  // If no valid location, skip location-based checks
+  if (!currentLocation || typeof currentLocation.lat !== 'number' || typeof currentLocation.lng !== 'number') {
+    return {
+      isCloned: false,
+      confidence: 'none',
+      reason: 'No location provided for cloning detection',
+    }
+  }
+
   // Check concurrent use
-  const concurrentCheck = await checkConcurrentUse(bandId, currentLocation)
+  const concurrentCheck = await checkConcurrentUse(bandId, currentLocation as { lat: number; lng: number })
   if (concurrentCheck.hasConcurrentUse) {
     return {
       isCloned: true,
