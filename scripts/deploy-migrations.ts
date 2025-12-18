@@ -135,7 +135,7 @@ async function main() {
 
   // Parse connection string
   const url = new URL(directUrl.replace(/^postgresql:\/\//, 'https://'))
-  const client = postgres({
+  const client = postgres(directUrl.replace(/^["']|["']$/g, ''), {
     host: url.hostname,
     port: parseInt(url.port) || 5432,
     database: url.pathname.slice(1) || 'postgres',
