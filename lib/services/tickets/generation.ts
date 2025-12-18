@@ -20,15 +20,17 @@ export async function generateTicket(params: TicketGenerationParams): Promise<st
   const supabase = await createServiceRoleClient()
 
   // Get event to obtain organizationId
-  const { data: event, error: eventError } = await supabase
+  const { data: eventData, error: eventError } = await (supabase
     .from('events')
     .select('organization_id')
     .eq('id', params.eventId)
-    .single()
+    .single() as any)
 
-  if (eventError || !event) {
+  if (eventError || !eventData) {
     throw new Error(`Failed to fetch event: ${eventError?.message}`)
   }
+
+  const event = eventData as any
 
   // Generate unique ticket number
   const ticketNumber = generateTicketNumber()
