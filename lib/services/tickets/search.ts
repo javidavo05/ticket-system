@@ -155,10 +155,12 @@ export async function searchTickets(criteria: TicketSearchCriteria): Promise<{
       .select('id')
       .ilike('national_id', `%${criteria.nationalId}%`)
 
-    const userIds = (users || []).map((u) => u.id)
+    const usersData = (users || []) as any[]
+    const userIds = usersData.map((u: any) => u.id)
 
     if (userIds.length > 0) {
-      const filteredTickets = tickets.filter((t) => t.purchaserId && userIds.includes(t.purchaserId))
+      const ticketsData = tickets as any[]
+      const filteredTickets = ticketsData.filter((t: any) => t.purchaserId && userIds.includes(t.purchaserId))
       return {
         tickets: filteredTickets,
         total: filteredTickets.length,
