@@ -129,9 +129,10 @@ async function testMigrations() {
 
       // Try to insert a transaction with the same idempotency key twice
       // This should fail on the second insert due to unique constraint
-      const { data: wallet } = await sql`
+      const walletResult = await sql`
         SELECT id FROM wallets WHERE user_id = ${testUserId} LIMIT 1
       `
+      const wallet = walletResult[0]
 
       if (wallet && wallet.length > 0) {
         const walletId = wallet[0].id
