@@ -86,7 +86,7 @@ export async function processScan(
   // Record valid scan
   const now = new Date().toISOString()
 
-  const { data: scan, error: scanError } = await supabase
+  const { data: scan, error: scanError } = await ((supabase as any)
     .from('ticket_scans')
     .insert({
       ticket_id: validation.ticketId,
@@ -96,7 +96,7 @@ export async function processScan(
       is_valid: true,
     })
     .select()
-    .single()
+    .single())
 
   if (scanError) {
     throw new Error(`Failed to record scan: ${scanError.message}`)
