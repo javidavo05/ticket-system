@@ -33,7 +33,7 @@ export async function getBalance(userId: string, eventId?: string): Promise<numb
 
   if (!wallet) {
     // Create wallet if it doesn't exist
-    const { data: newWallet, error: createError } = await supabase
+    const { data: newWallet, error: createError } = await ((supabase as any)
       .from('wallets')
       .insert({
         user_id: userId,
@@ -41,7 +41,7 @@ export async function getBalance(userId: string, eventId?: string): Promise<numb
         balance: '0',
       })
       .select()
-      .single()
+      .single())
 
     if (createError || !newWallet) {
       throw new Error('Failed to create wallet')
