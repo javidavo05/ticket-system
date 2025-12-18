@@ -119,18 +119,20 @@ export async function transitionTicket(
   // Log audit event
   await logAuditEvent(
     {
-      userId: userId || null,
+      userId: userId || undefined,
       action: 'ticket_state_transition',
       resourceType: 'ticket',
       resourceId: ticketId,
       changes: {
-        from: currentStatus,
-        to: newStatus,
-        reason: reason || null,
+        status: {
+          before: currentStatus,
+          after: newStatus,
+        },
       },
       metadata: {
         ticketNumber: ticket.ticket_number,
         eventId: ticket.event_id,
+        reason: reason || null,
       },
     },
     request
