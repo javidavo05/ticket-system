@@ -37,7 +37,7 @@ export async function generateTicket(params: TicketGenerationParams): Promise<st
   // Use ISSUED status for new tickets (will transition to PAID after payment)
   const initialStatus = params.paymentId ? TICKET_STATUS.PAID : TICKET_STATUS.ISSUED
 
-  const { data: ticket, error } = await supabase
+  const { data: ticket, error } = await ((supabase as any)
     .from('tickets')
     .insert({
       ticket_number: ticketNumber,
@@ -56,7 +56,7 @@ export async function generateTicket(params: TicketGenerationParams): Promise<st
       assigned_to_name: params.assignedToName || null,
     })
     .select()
-    .single()
+    .single())
 
   if (error || !ticket) {
     throw new Error(`Failed to create ticket: ${error?.message}`)
