@@ -198,15 +198,15 @@ export async function getThemeBySlug(slug: string): Promise<ThemeResolutionResul
   const supabase = await createServiceRoleClient()
 
   // Get event by slug
-  const { data: event } = await supabase
+  const { data: eventData } = await (supabase
     .from('events')
     .select('id, organization_id')
     .eq('slug', slug)
     .in('status', ['published', 'live'])
     .is('deleted_at', null)
-    .single()
+    .single() as any)
 
-  if (!event) {
+  if (!eventData) {
     // Return default theme if event not found
     const defaultTheme = await getDefaultTheme()
     return {
@@ -216,6 +216,8 @@ export async function getThemeBySlug(slug: string): Promise<ThemeResolutionResul
       cacheTags: generateThemeCacheTags(defaultTheme),
     }
   }
+
+  const event = eventData as any
 
   return resolveTheme({
     eventId: event.id,
