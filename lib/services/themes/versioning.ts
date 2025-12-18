@@ -105,7 +105,7 @@ export async function publishThemeVersion(
   }
 
   // Update theme with new version
-  const { data: updatedTheme, error: updateError } = await supabase
+  const { data: updatedTheme, error: updateError } = await ((supabase as any)
     .from('themes')
     .update({
       version: version,
@@ -118,7 +118,7 @@ export async function publishThemeVersion(
     })
     .eq('id', themeId)
     .select()
-    .single()
+    .single())
 
   if (updateError || !updatedTheme) {
     throw new Error(`Failed to publish theme version: ${updateError?.message}`)
