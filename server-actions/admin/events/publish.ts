@@ -58,7 +58,7 @@ export async function publishEvent(eventId: string) {
         newStatus: EVENT_STATUS.PUBLISHED,
       },
     },
-    request
+    request as any
   )
 
   return event
