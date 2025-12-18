@@ -41,15 +41,17 @@ export async function getTransactions(
     query = query.eq('event_id', options.eventId)
   }
 
-  const { data: transactions, error } = await query
+  const { data: transactionsData, error } = await (query
     .order('sequence_number', { ascending: false })
-    .range(offset, offset + limit - 1)
+    .range(offset, offset + limit - 1) as any)
+
+  const transactions = (transactionsData || []) as any[]
 
   if (error) {
     throw error
   }
 
-  return (transactions || []).map(t => ({
+  return transactions.map((t: any) => ({
     id: t.id,
     transactionType: t.transaction_type as 'credit' | 'debit',
     amount: parseFloat(t.amount as string),
