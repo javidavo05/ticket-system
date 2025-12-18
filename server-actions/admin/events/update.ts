@@ -119,7 +119,7 @@ export async function updateEvent(eventId: string, data: {
         }, {} as Record<string, { before: unknown; after: unknown }>),
       },
     },
-    request
+    request as any
   )
 
   return updatedEvent
