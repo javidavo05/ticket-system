@@ -53,11 +53,13 @@ export async function prefetchThemeContext(
 
       // Prefetch event theme if eventId provided
       if (context.eventId) {
-        const { data: event } = await supabase
+        const { data: eventData } = await (supabase
           .from('events')
           .select('theme_id, organization_id')
           .eq('id', context.eventId)
-          .single()
+          .single() as any)
+
+        const event = eventData as any
 
         if (event?.theme_id) {
           themeIds.push(event.theme_id)
