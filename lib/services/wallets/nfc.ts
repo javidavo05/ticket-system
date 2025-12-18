@@ -80,13 +80,13 @@ export async function registerBand(
 export async function bindBandToUser(bandUid: string, userId: string): Promise<void> {
   const supabase = await createServiceRoleClient()
 
-  const { error } = await supabase
+  const { error } = await ((supabase as any)
     .from('nfc_bands')
     .update({
       user_id: userId,
       last_used_at: new Date().toISOString(),
     })
-    .eq('band_uid', bandUid)
+    .eq('band_uid', bandUid))
 
   if (error) {
     throw new Error(`Failed to bind NFC band: ${error.message}`)
