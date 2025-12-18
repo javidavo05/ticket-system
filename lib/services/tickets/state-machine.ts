@@ -186,10 +186,10 @@ export async function transitionTickets(
   }
 
   // Update all tickets
-  const { error: updateError } = await supabase
+  const { error: updateError } = await ((supabase as any)
     .from('tickets')
     .update(updateData)
-    .in('id', ticketIds)
+    .in('id', ticketIds))
 
   if (updateError) {
     throw new Error(`Failed to transition tickets: ${updateError.message}`)
