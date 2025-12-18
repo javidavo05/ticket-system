@@ -217,13 +217,13 @@ export async function addBalance(
 
   // Update user's wallet_balance for quick access (only for global wallets)
   if (!eventId) {
-    await supabase
+    await ((supabase as any)
       .from('users')
       .update({
         wallet_balance: newBalance.toFixed(2),
         updated_at: new Date().toISOString(),
       })
-      .eq('id', userId)
+      .eq('id', userId))
   }
 
   return {
@@ -378,13 +378,13 @@ export async function deductBalance(
 
   // Update user's wallet_balance for quick access (only for global wallets)
   if (!eventId) {
-    await supabase
+    await ((supabase as any)
       .from('users')
       .update({
         wallet_balance: newBalance.toFixed(2),
         updated_at: new Date().toISOString(),
       })
-      .eq('id', userId)
+      .eq('id', userId))
   }
 
   return {
