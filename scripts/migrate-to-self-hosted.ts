@@ -51,7 +51,7 @@ async function parseArgs(): Promise<MigrationConfig> {
   return config
 }
 
-async function createDualWriteFunction(client: Client): Promise<void> {
+async function createDualWriteFunction(client: ReturnType<typeof postgres>): Promise<void> {
   console.log('📝 Creating dual-write function...')
   
   const sql = `
@@ -84,8 +84,8 @@ async function createDualWriteFunction(client: Client): Promise<void> {
 }
 
 async function verifyDataConsistency(
-  supabaseClient: Client,
-  selfHostedClient: Client
+  supabaseClient: ReturnType<typeof postgres>,
+  selfHostedClient: ReturnType<typeof postgres>
 ): Promise<{ consistent: boolean; differences: string[] }> {
   console.log('🔍 Verifying data consistency...')
   
@@ -134,7 +134,7 @@ async function verifyDataConsistency(
   return { consistent, differences }
 }
 
-async function exportData(client: Client, outputPath: string): Promise<void> {
+async function exportData(client: ReturnType<typeof postgres>, outputPath: string): Promise<void> {
   console.log(`📤 Exporting data to ${outputPath}...`)
   
   // This would use pg_dump in production
@@ -143,7 +143,7 @@ async function exportData(client: Client, outputPath: string): Promise<void> {
   console.log(`   pg_dump "$DATABASE_URL" > ${outputPath}`)
 }
 
-async function importData(client: Client, inputPath: string): Promise<void> {
+async function importData(client: ReturnType<typeof postgres>, inputPath: string): Promise<void> {
   console.log(`📥 Importing data from ${inputPath}...`)
   
   // This would use psql in production

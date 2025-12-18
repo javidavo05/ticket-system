@@ -67,7 +67,7 @@ async function runMigration(client: ReturnType<typeof postgres>, filename: strin
   }
 }
 
-async function verifyConnection(client: Client): Promise<boolean> {
+async function verifyConnection(client: ReturnType<typeof postgres>): Promise<boolean> {
   try {
     const result = await client.query('SELECT version()')
     console.log(`✅ Connected to PostgreSQL: ${result.rows[0].version.split(' ')[0]} ${result.rows[0].version.split(' ')[1]}`)
@@ -78,7 +78,7 @@ async function verifyConnection(client: Client): Promise<boolean> {
   }
 }
 
-async function checkMigrationTable(client: Client): Promise<void> {
+async function checkMigrationTable(client: ReturnType<typeof postgres>): Promise<void> {
   try {
     // Check if migrations table exists
     const result = await client.query(`
@@ -103,7 +103,7 @@ async function checkMigrationTable(client: Client): Promise<void> {
   }
 }
 
-async function isMigrationApplied(client: Client, filename: string): Promise<boolean> {
+async function isMigrationApplied(client: ReturnType<typeof postgres>, filename: string): Promise<boolean> {
   try {
     const result = await client.query(
       'SELECT 1 FROM schema_migrations WHERE version = $1',
@@ -115,7 +115,7 @@ async function isMigrationApplied(client: Client, filename: string): Promise<boo
   }
 }
 
-async function markMigrationApplied(client: Client, filename: string): Promise<void> {
+async function markMigrationApplied(client: ReturnType<typeof postgres>, filename: string): Promise<void> {
   try {
     await client.query(
       'INSERT INTO schema_migrations (version) VALUES ($1) ON CONFLICT (version) DO NOTHING',
