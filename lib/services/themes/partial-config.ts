@@ -22,9 +22,9 @@ function deepMerge<T extends Record<string, any>>(
       typeof target[key] === 'object' &&
       !Array.isArray(target[key])
     ) {
-      result[key] = deepMerge(target[key] || {}, source[key] || {})
+      result[key] = deepMerge(target[key] || {}, source[key] || {}) as any
     } else {
-      result[key] = source[key] as T[Extract<keyof T, string>]
+      result[key] = source[key] as any
     }
   }
 
