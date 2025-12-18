@@ -79,7 +79,7 @@ async function createDualWriteFunction(client: ReturnType<typeof postgres>): Pro
     $$ LANGUAGE plpgsql;
   `
 
-  await client.query(sql)
+  await client.unsafe(sql)
   console.log('✅ Dual-write function created')
 }
 
@@ -200,7 +200,7 @@ async function dualWritePhase(config: MigrationConfig): Promise<void> {
       
       // Write to self-hosted (secondary) - don't fail on error
       try {
-        await selfHostedClient.query(
+        await selfHostedClient.unsafe(
           \`INSERT INTO \${table} VALUES ...\`
         )
       } catch (error) {

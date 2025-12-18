@@ -105,11 +105,10 @@ async function checkMigrationTable(client: ReturnType<typeof postgres>): Promise
 
 async function isMigrationApplied(client: ReturnType<typeof postgres>, filename: string): Promise<boolean> {
   try {
-    const result = await client.query(
-      'SELECT 1 FROM schema_migrations WHERE version = $1',
-      [filename]
-    )
-    return result.rows.length > 0
+    const result = await client`
+      SELECT 1 FROM schema_migrations WHERE version = ${filename}
+    `
+    return result.length > 0
   } catch {
     return false
   }
@@ -117,10 +116,9 @@ async function isMigrationApplied(client: ReturnType<typeof postgres>, filename:
 
 async function markMigrationApplied(client: ReturnType<typeof postgres>, filename: string): Promise<void> {
   try {
-    await client.query(
-      'INSERT INTO schema_migrations (version) VALUES ($1) ON CONFLICT (version) DO NOTHING',
-      [filename]
-    )
+    await client`
+      INSERT INTO schema_migrations (version) VALUES (${filename}) ON CONFLICT (version) DO NOTHING
+    `
   } catch (error: any) {
     console.warn(`⚠️  Could not mark migration as applied: ${error.message}`)
   }
