@@ -96,7 +96,7 @@ async function checkUserRoles(email?: string) {
     }
 
     const usersMap = new Map<string, any[]>()
-    roles.forEach(role => {
+    roles.forEach((role: any) => {
       const userId = role.user_id
       if (!usersMap.has(userId)) {
         usersMap.set(userId, [])
