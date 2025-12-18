@@ -57,7 +57,7 @@ export async function createEvent(formData: FormData) {
       created_by: user.id,
     })
     .select()
-    .single()
+    .single())
 
   if (error || !event) {
     throw new Error(`Error al crear el evento: ${error?.message}`)
