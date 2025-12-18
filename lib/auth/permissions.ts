@@ -14,7 +14,7 @@ export async function requireAuth() {
   return user
 }
 
-export async function requireRole(role: string, eventId?: string) {
+export async function requireRole(role: string | string[], eventId?: string) {
   const user = await requireAuth()
   
   const hasRequiredRole = eventId
