@@ -162,7 +162,8 @@ export async function transitionTickets(
   }
 
   // Validate all transitions
-  for (const ticket of tickets) {
+  const ticketsData = tickets as any[]
+  for (const ticket of ticketsData) {
     if (!canTransition(ticket.status, newStatus)) {
       throw new Error(
         `Invalid state transition for ticket ${ticket.ticket_number}: ` +
