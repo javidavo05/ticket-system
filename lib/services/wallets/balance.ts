@@ -25,7 +25,9 @@ export async function getBalance(userId: string, eventId?: string): Promise<numb
     query = query.is('event_id', null)
   }
 
-  const { data: wallet, error } = await query.single()
+  const { data: walletData, error } = await (query.single() as any)
+
+  const wallet = walletData as any
 
   if (error && error.code !== 'PGRST116') {
     throw error
