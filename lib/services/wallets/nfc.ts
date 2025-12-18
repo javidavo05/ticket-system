@@ -192,13 +192,13 @@ export async function processNFCPayment(
 
   // Link nonce to transaction if nonce was used
   if (nonce) {
-    await supabase
+    await ((supabase as any)
       .from('nfc_nonces')
       .update({
         transaction_id: transaction.id,
       })
       .eq('nfc_band_id', band.id)
-      .eq('nonce', nonce)
+      .eq('nonce', nonce))
   }
 
   return {
