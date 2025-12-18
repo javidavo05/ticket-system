@@ -58,15 +58,17 @@ export async function getThemeByEvent(eventId: string): Promise<Theme | null> {
   const supabase = await createServiceRoleClient()
 
   // First, check if event has a theme_id assigned
-  const { data: event } = await supabase
+  const { data: eventData } = await (supabase
     .from('events')
     .select('theme_id, organization_id')
     .eq('id', eventId)
-    .single()
+    .single() as any)
 
-  if (!event) {
+  if (!eventData) {
     return null
   }
+
+  const event = eventData as any
 
   // If event has theme_id, get that theme
   if (event.theme_id) {
