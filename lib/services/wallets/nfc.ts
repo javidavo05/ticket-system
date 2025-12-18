@@ -132,11 +132,13 @@ export async function processNFCPayment(
   const supabase = await createServiceRoleClient()
 
   // Get band
-  const { data: band, error: bandError } = await supabase
+  const { data: bandData, error: bandError } = await ((supabase as any)
     .from('nfc_bands')
     .select('id, user_id, status')
     .eq('band_uid', bandUid)
-    .single()
+    .single())
+
+  const band = bandData as any
 
   if (bandError || !band) {
     throw new NotFoundError('NFC band')
