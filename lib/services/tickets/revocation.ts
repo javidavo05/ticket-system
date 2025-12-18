@@ -61,7 +61,8 @@ export async function revokeTicketsByPayment(
     return // No tickets to revoke
   }
 
-  const ticketIds = tickets.map((t) => t.id)
+  const ticketsData = tickets as any[]
+  const ticketIds = ticketsData.map((t: any) => t.id)
 
   // Transition all tickets to revoked state
   await transitionTickets(ticketIds, TICKET_STATUS.REVOKED, reason, revokedBy, request)
