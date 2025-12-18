@@ -162,7 +162,7 @@ async function setupPhase(config: MigrationConfig): Promise<void> {
   const selfHostedClient = postgres(config.selfHostedUrl)
 
   try {
-    await selfHostedClient.connect()
+    // postgres client connects automatically
     console.log('✅ Connected to self-hosted database')
 
     // Run all migrations on self-hosted
@@ -224,8 +224,8 @@ async function verifyPhase(config: MigrationConfig): Promise<void> {
   const selfHostedClient = postgres(config.selfHostedUrl)
 
   try {
-    await supabaseClient.connect()
-    await selfHostedClient.connect()
+    // postgres client connects automatically
+    // postgres client connects automatically
 
     const result = await verifyDataConsistency(supabaseClient, selfHostedClient)
 
