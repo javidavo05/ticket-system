@@ -159,9 +159,7 @@ async function setupPhase(config: MigrationConfig): Promise<void> {
     process.exit(1)
   }
 
-  const selfHostedClient = postgres({
-    connectionString: config.selfHostedUrl,
-  })
+  const selfHostedClient = postgres(config.selfHostedUrl)
 
   try {
     await selfHostedClient.connect()
@@ -221,13 +219,9 @@ async function verifyPhase(config: MigrationConfig): Promise<void> {
     process.exit(1)
   }
 
-  const supabaseClient = postgres({
-    connectionString: config.supabaseUrl,
-  })
+  const supabaseClient = postgres(config.supabaseUrl)
 
-  const selfHostedClient = postgres({
-    connectionString: config.selfHostedUrl,
-  })
+  const selfHostedClient = postgres(config.selfHostedUrl)
 
   try {
     await supabaseClient.connect()
