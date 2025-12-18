@@ -284,7 +284,9 @@ export async function deductBalance(
     query = query.is('event_id', null)
   }
 
-  const { data: wallet, error: walletError } = await query.single()
+  const { data: walletData, error: walletError } = await (query.single() as any)
+
+  const wallet = walletData as any
 
   if (walletError || !wallet) {
     throw new NotFoundError('Wallet')
