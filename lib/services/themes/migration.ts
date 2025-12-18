@@ -48,7 +48,8 @@ export function migrateThemeConfig(
 
   // Step 3: Ensure required tokens exist (use defaults if missing)
   for (const category of Object.values(toContract.tokens)) {
-    for (const token of category.required) {
+    const categoryData = category as any
+    for (const token of categoryData.required || []) {
       if (!hasToken(migrated, token.path)) {
         const defaultValue = getDefaultValue(token.path, toContract)
         setTokenValue(migrated, token.path, defaultValue)
