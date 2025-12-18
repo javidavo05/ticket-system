@@ -269,7 +269,8 @@ export async function handleCloningAlert(bandId: string, reason: string): Promis
  */
 export async function startUsageSession(
   bandId: string,
-  location: { lat: number; lng: number }
+  eventId: string,
+  location?: { lat?: number; lng?: number }
 ): Promise<string> {
   const supabase = await createServiceRoleClient()
 
