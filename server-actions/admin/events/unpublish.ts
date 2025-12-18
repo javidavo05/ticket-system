@@ -19,11 +19,13 @@ export async function unpublishEvent(eventId: string) {
   const supabase = await createServiceRoleClient()
 
   // Get current event status
-  const { data: currentEvent, error: fetchError } = await supabase
+  const { data: currentEventData, error: fetchError } = await ((supabase as any)
     .from('events')
     .select('status')
     .eq('id', eventId)
-    .single()
+    .single())
+
+  const currentEvent = currentEventData as any
 
   if (fetchError || !currentEvent) {
     throw new ValidationError('Evento no encontrado')
