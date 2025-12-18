@@ -102,15 +102,13 @@ async function verifyDataConsistency(
   for (const table of tables) {
     try {
       // Get row counts
-      const supabaseCount = await supabaseClient.query(
-        `SELECT COUNT(*) as count FROM ${table}`
-      )
-      const selfHostedCount = await selfHostedClient.query(
-        `SELECT COUNT(*) as count FROM ${table}`
-      )
+      const supabaseResult = await supabaseClient.unsafe(`SELECT COUNT(*) as count FROM ${table}`)
+      const supabaseCount = supabaseResult[0]
+      const selfHostedResult = await selfHostedClient.unsafe(`SELECT COUNT(*) as count FROM ${table}`)
+      const selfHostedCount = selfHostedResult[0]
 
-      const supabaseRows = parseInt(supabaseCount.rows[0].count)
-      const selfHostedRows = parseInt(selfHostedCount.rows[0].count)
+      const supabaseRows = parseInt(supabaseCount.count)
+      const selfHostedRows = parseInt(selfHostedCount.count)
 
       if (supabaseRows !== selfHostedRows) {
         differences.push(
