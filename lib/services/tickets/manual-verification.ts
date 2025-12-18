@@ -34,15 +34,17 @@ export async function manualValidateTicket(
   const supabase = await createServiceRoleClient()
 
   // Get ticket info
-  const { data: ticket, error: ticketError } = await supabase
+  const { data: ticketData, error: ticketError } = await (supabase
     .from('tickets')
     .select('id, ticket_number, status, event_id, scan_count, ticket_types!inner(is_multi_scan)')
     .eq('id', ticketId)
-    .single()
+    .single() as any)
 
-  if (ticketError || !ticket) {
+  if (ticketError || !ticketData) {
     throw new Error(`Ticket not found: ${ticketId}`)
   }
+
+  const ticket = ticketData as any
 
   // Verify ticket is in a valid state for scanning
   if (ticket.status === TICKET_STATUS.REVOKED || ticket.status === TICKET_STATUS.REFUNDED) {
