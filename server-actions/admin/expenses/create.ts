@@ -67,7 +67,7 @@ export async function createEventExpense(eventId: string, data: {
   const supabase = await createServiceRoleClient()
 
   // Create expense
-  const { data: expense, error } = await supabase
+  const { data: expense, error } = await ((supabase as any)
     .from('event_expenses')
     .insert({
       event_id: eventId,
