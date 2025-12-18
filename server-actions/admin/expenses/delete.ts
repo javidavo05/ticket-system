@@ -20,11 +20,13 @@ export async function deleteEventExpense(expenseId: string) {
   const supabase = await createServiceRoleClient()
 
   // Get current expense
-  const { data: expense, error: fetchError } = await supabase
+  const { data: expenseData, error: fetchError } = await ((supabase as any)
     .from('event_expenses')
     .select('id, event_id, created_by, category, amount')
     .eq('id', expenseId)
-    .single()
+    .single())
+
+  const expense = expenseData as any
 
   if (fetchError || !expense) {
     throw new NotFoundError('Expense')
