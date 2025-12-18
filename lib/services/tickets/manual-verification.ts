@@ -56,11 +56,13 @@ export async function manualValidateTicket(
   }
 
   // Get validator info
-  const { data: validator } = await supabase
+  const { data: validatorData } = await (supabase
     .from('users')
     .select('id, email, full_name')
     .eq('id', validatorId)
-    .single()
+    .single() as any)
+
+  const validator = validatorData as any
 
   // Create manual scan record
   const scanLocation = location ? `(${location.lng},${location.lat})` : null
