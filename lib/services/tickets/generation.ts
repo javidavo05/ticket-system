@@ -64,9 +64,11 @@ export async function generateTicket(params: TicketGenerationParams): Promise<st
     throw new Error(`Failed to create ticket: ${error?.message}`)
   }
 
+  const ticketData = ticket as any
+
   // Create QR payload with all required fields
   const qrPayload = {
-    ticketId: ticket.id,
+    ticketId: ticketData.id,
     eventId: params.eventId,
     ticketNumber,
     organizationId: event.organization_id || undefined,
@@ -92,7 +94,7 @@ export async function generateTicket(params: TicketGenerationParams): Promise<st
       qr_signature: qrSignature,
       qr_payload: qrPayload,
     })
-    .eq('id', ticket.id))
+    .eq('id', ticketData.id))
 
   if (updateError) {
     throw new Error(`Failed to update ticket QR: ${updateError.message}`)
@@ -100,7 +102,7 @@ export async function generateTicket(params: TicketGenerationParams): Promise<st
 
   // Store nonce in ticket_nonces table for replay prevention
   const { error: nonceError } = await ((supabase as any).from('ticket_nonces').insert({
-    ticket_id: ticket.id,
+    ticket_id: ticketData.id,
     nonce: nonce,
   }))
 
