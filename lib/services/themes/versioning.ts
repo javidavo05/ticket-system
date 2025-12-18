@@ -221,7 +221,8 @@ export async function getThemeVersions(themeId: string): Promise<ThemeVersion[]>
     throw error
   }
 
-  return (versions || []).map(v => ({
+  const versionsData = (versions || []) as any[]
+  return versionsData.map((v: any) => ({
     id: v.id,
     themeId: v.theme_id,
     version: v.version,
