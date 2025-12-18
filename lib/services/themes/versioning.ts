@@ -167,11 +167,13 @@ export async function getThemeVersion(
     query = query.order('version', { ascending: false }).limit(1)
   }
 
-  const { data: versionData, error } = await query.single()
+  const { data: versionDataRaw, error } = await (query.single() as any)
 
-  if (error || !versionData) {
+  if (error || !versionDataRaw) {
     return null
   }
+
+  const versionData = versionDataRaw as any
 
   return {
     id: versionData.id,
