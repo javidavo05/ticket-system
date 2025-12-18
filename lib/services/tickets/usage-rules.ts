@@ -45,7 +45,8 @@ export async function getTicketUsageRules(
     return []
   }
 
-  return (rules || []).map((rule) => ({
+  const rulesData = (rules || []) as any[]
+  return rulesData.map((rule: any) => ({
     id: rule.id,
     ticketTypeId: rule.ticket_type_id,
     ruleType: rule.rule_type,
