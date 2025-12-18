@@ -66,7 +66,7 @@ export async function deleteEvent(eventId: string) {
         eventSlug: event.slug,
       },
     },
-    request
+    request as any
   )
 
   return { success: true }
