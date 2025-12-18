@@ -78,11 +78,13 @@ export async function addBalance(
   // Check idempotency - if transaction already exists, return it
   const existingTransactionId = await checkWalletTransactionIdempotency(finalIdempotencyKey)
   if (existingTransactionId) {
-    const { data: existingTransaction } = await supabase
+    const { data: existingTransactionData } = await (supabase
       .from('wallet_transactions')
       .select('balance_after')
       .eq('id', existingTransactionId)
-      .single()
+      .single() as any)
+
+    const existingTransaction = existingTransactionData as any
 
     if (existingTransaction) {
       return {
