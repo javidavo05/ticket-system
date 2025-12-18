@@ -45,12 +45,14 @@ export async function validateTicketWithReplayPrevention(
   }
 
   // Step 2: Check replay attack - verify nonce hasn't been used
-  const { data: existingNonce } = await supabase
+  const { data: existingNonceData } = await (supabase
     .from('ticket_nonces')
     .select('id, scan_id')
     .eq('ticket_id', payload.ticketId)
     .eq('nonce', payload.nonce)
-    .single()
+    .single() as any)
+
+  const existingNonce = existingNonceData as any
 
   if (existingNonce && existingNonce.scan_id) {
     return {
