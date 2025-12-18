@@ -323,7 +323,7 @@ export async function deductBalance(
       updated_at: new Date().toISOString(),
     })
     .eq('id', wallet.id)
-    .eq('balance', wallet.balance) // Optimistic locking
+    .eq('balance', wallet.balance)) // Optimistic locking
 
   if (updateError) {
     throw new Error('Failed to update wallet balance')
