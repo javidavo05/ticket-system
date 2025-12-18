@@ -83,7 +83,7 @@ export async function updateEvent(eventId: string, data: {
   if (validated.locationName !== undefined) updateData.location_name = validated.locationName
   if (validated.locationAddress !== undefined) updateData.location_address = validated.locationAddress
   if (validated.themeId !== undefined) updateData.theme_id = validated.themeId || null
-  if (validated.status !== undefined) updateData.status = validated.status
+  if (validatedWithStatus.status !== undefined) updateData.status = validatedWithStatus.status
 
   // Update event
   const { data: updatedEvent, error: updateError } = await supabase
