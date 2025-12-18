@@ -181,7 +181,7 @@ export const themeConfigSchema = z.object({
  * Throws ZodError if validation fails
  */
 export function validateThemeConfig(config: unknown): ThemeConfig {
-  return themeConfigSchema.parse(config)
+  return themeConfigSchema.parse(config) as any as ThemeConfig
 }
 
 /**
