@@ -69,8 +69,8 @@ async function runMigration(client: ReturnType<typeof postgres>, filename: strin
 
 async function verifyConnection(client: ReturnType<typeof postgres>): Promise<boolean> {
   try {
-    const result = await client.query('SELECT version()')
-    console.log(`✅ Connected to PostgreSQL: ${result.rows[0].version.split(' ')[0]} ${result.rows[0].version.split(' ')[1]}`)
+    const result = await client`SELECT version()`
+    console.log(`✅ Connected to PostgreSQL: ${result[0].version.split(' ')[0]} ${result[0].version.split(' ')[1]}`)
     return true
   } catch (error: any) {
     console.error(`❌ Connection failed: ${error.message}`)
@@ -81,22 +81,22 @@ async function verifyConnection(client: ReturnType<typeof postgres>): Promise<bo
 async function checkMigrationTable(client: ReturnType<typeof postgres>): Promise<void> {
   try {
     // Check if migrations table exists
-    const result = await client.query(`
+    const result = await client`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
         WHERE table_schema = 'public' 
         AND table_name = 'schema_migrations'
       )
-    `)
+    `
 
-    if (!result.rows[0].exists) {
+    if (!result[0].exists) {
       console.log('📝 Creating migrations tracking table...')
-      await client.query(`
+      await client`
         CREATE TABLE IF NOT EXISTS schema_migrations (
           version VARCHAR(255) PRIMARY KEY,
           applied_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
         )
-      `)
+      `
     }
   } catch (error: any) {
     console.warn(`⚠️  Could not check migrations table: ${error.message}`)
