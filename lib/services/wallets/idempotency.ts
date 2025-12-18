@@ -62,7 +62,7 @@ export async function validateLedgerIntegrity(walletId: string): Promise<{
   const supabase = await createServiceRoleClient()
 
   // Call the database function to validate integrity
-  const { data, error } = await supabase.rpc('validate_wallet_ledger_integrity', {
+  const { data, error } = await (supabase as any).rpc('validate_wallet_ledger_integrity', {
     wallet_uuid: walletId,
   })
 
