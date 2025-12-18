@@ -70,12 +70,14 @@ export async function getTransactions(
 export async function getTransactionById(transactionId: string, userId: string): Promise<WalletTransaction | null> {
   const supabase = await createServiceRoleClient()
 
-  const { data: transaction, error } = await supabase
+  const { data: transactionData, error } = await ((supabase as any)
     .from('wallet_transactions')
     .select('*')
     .eq('id', transactionId)
     .eq('user_id', userId)
-    .single()
+    .single())
+
+  const transaction = transactionData as any
 
   if (error || !transaction) {
     return null
