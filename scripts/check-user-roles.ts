@@ -41,10 +41,12 @@ async function checkUserRoles(email?: string) {
     console.log('')
 
     // Verificar roles
-    const { data: roles, error: roleError } = await supabase
+    const { data: rolesData, error: roleError } = await ((supabase as any)
       .from('user_roles')
       .select('role, event_id, created_at')
-      .eq('user_id', user.id)
+      .eq('user_id', user.id))
+
+    const roles = (rolesData || []) as any[]
 
     if (roleError) {
       console.error('❌ Error al buscar roles:', roleError.message)
@@ -55,7 +57,7 @@ async function checkUserRoles(email?: string) {
     if (!roles || roles.length === 0) {
       console.log('   ⚠️  No tiene roles asignados')
     } else {
-      roles.forEach(role => {
+      roles.forEach((role: any) => {
         console.log(`   - ${role.role}${role.event_id ? ` (Evento: ${role.event_id})` : ' (Global)'}`)
       })
     }
