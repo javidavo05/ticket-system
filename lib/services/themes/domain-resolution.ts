@@ -73,17 +73,19 @@ export async function resolveOrganizationFromSubdomain(
   const supabase = await createServiceRoleClient()
 
   // Query organizations by slug matching subdomain
-  const { data: org } = await supabase
+  const { data: orgData } = await (supabase
     .from('organizations')
     .select('id, slug')
     .eq('slug', subdomain)
     .eq('is_active', true)
     .is('deleted_at', null)
-    .single()
+    .single() as any)
 
-  if (!org) {
+  if (!orgData) {
     return null
   }
+
+  const org = orgData as any
 
   const result: DomainResolutionResult = {
     organizationId: org.id,
