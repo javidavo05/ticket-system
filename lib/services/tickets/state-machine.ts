@@ -49,7 +49,7 @@ export function getValidTransitions(from: string): string[] {
  * Check if a state is terminal
  */
 export function isTerminalState(state: string): boolean {
-  return TERMINAL_STATES.includes(state)
+  return TERMINAL_STATES.includes(state as any)
 }
 
 /**
