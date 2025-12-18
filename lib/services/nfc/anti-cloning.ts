@@ -274,7 +274,7 @@ export async function startUsageSession(
   const supabase = await createServiceRoleClient()
 
   const sessionToken = crypto.randomUUID()
-  const point = `(${location.lng},${location.lat})`
+  const point = location && location.lng && location.lat ? `(${location.lng},${location.lat})` : null
 
   const { data: session, error } = await ((supabase
     .from('nfc_usage_sessions') as any)
