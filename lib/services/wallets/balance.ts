@@ -127,17 +127,20 @@ export async function addBalance(
     wallet = newWallet
   }
 
-  const currentBalance = parseFloat((wallet as any).balance as string)
+  const walletTyped = wallet as any
+  const currentBalance = parseFloat(walletTyped.balance as string)
   const newBalance = currentBalance + amount
 
   // Get the next sequence number for this wallet
-  const { data: lastTransaction } = await supabase
+  const { data: lastTransactionData } = await (supabase
     .from('wallet_transactions')
     .select('sequence_number')
-    .eq('wallet_id', wallet.id)
+    .eq('wallet_id', walletTyped.id)
     .order('sequence_number', { ascending: false })
     .limit(1)
-    .single()
+    .single() as any)
+
+  const lastTransaction = lastTransactionData as any
 
   const nextSequenceNumber = lastTransaction
     ? parseInt(lastTransaction.sequence_number as string, 10) + 1
@@ -148,13 +151,13 @@ export async function addBalance(
   // so we rely on database constraints and optimistic locking
 
   // Update wallet balance with optimistic locking
-  const { error: updateError } = await supabase
+  const { error: updateError } = await ((supabase as any)
     .from('wallets')
     .update({
       balance: newBalance.toFixed(2),
       updated_at: new Date().toISOString(),
     })
-    .eq('id', wallet.id)
+    .eq('id', walletTyped.id))
     .eq('balance', wallet.balance) // Optimistic locking
 
   if (updateError) {
