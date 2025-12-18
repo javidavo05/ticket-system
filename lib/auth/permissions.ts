@@ -17,12 +17,15 @@ export async function requireAuth() {
 export async function requireRole(role: string | string[], eventId?: string) {
   const user = await requireAuth()
   
+  const roles = Array.isArray(role) ? role : [role]
+  
   const hasRequiredRole = eventId
-    ? await isEventAdmin(user.id, eventId) || await hasRole(user.id, role, eventId)
-    : await hasRole(user.id, role) || await isSuperAdmin(user.id)
+    ? await isEventAdmin(user.id, eventId) || (await Promise.all(roles.map(r => hasRole(user.id, r, eventId)))).some(Boolean)
+    : (await Promise.all(roles.map(r => hasRole(user.id, r)))).some(Boolean) || await isSuperAdmin(user.id)
 
   if (!hasRequiredRole) {
-    throw new AuthorizationError(`Requires ${role} role`)
+    const roleStr = Array.isArray(role) ? role.join(' or ') : role
+    throw new AuthorizationError(`Requires ${roleStr} role`)
   }
 
   return user
