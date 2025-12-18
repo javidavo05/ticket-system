@@ -79,7 +79,7 @@ export async function createEventExpense(eventId: string, data: {
       created_by: user.id,
     })
     .select()
-    .single()
+    .single())
 
   if (error || !expense) {
     throw new ValidationError(`Error al crear gasto: ${error?.message}`)
