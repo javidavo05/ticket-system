@@ -218,9 +218,9 @@ export async function validateBandAccess(
 
   // Start usage session if location provided
   let sessionToken: string | undefined
-  if (location) {
+  if (location && location.lat && location.lng) {
     try {
-      sessionToken = await startUsageSession(bandId, location)
+      sessionToken = await startUsageSession(bandId, eventId, location as { lat: number; lng: number })
     } catch (error) {
       // Non-critical, log but continue
       console.error('Failed to start usage session:', error)
