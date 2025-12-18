@@ -104,10 +104,10 @@ export async function manualValidateTicket(
     updateData.first_scan_at = now
   }
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await ((supabase as any)
     .from('tickets')
     .update(updateData)
-    .eq('id', ticketId)
+    .eq('id', ticketId))
 
   if (updateError) {
     console.error('Error updating ticket scan count:', updateError)
