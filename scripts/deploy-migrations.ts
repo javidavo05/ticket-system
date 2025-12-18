@@ -48,15 +48,15 @@ async function runMigration(client: ReturnType<typeof postgres>, filename: strin
     const sql = await readFile(filepath, 'utf-8')
 
     // Run migration in a transaction
-    await client.query('BEGIN')
+    await client`BEGIN`
     try {
-      await client.query(sql)
-      await client.query('COMMIT')
+      await client.unsafe(sql)
+      await client`COMMIT`
       const duration = Date.now() - startTime
       console.log(`✅ Migration completed: ${filename} (${duration}ms)`)
       return { filename, success: true, duration }
     } catch (error: any) {
-      await client.query('ROLLBACK')
+      await client`ROLLBACK`
       throw error
     }
   } catch (error: any) {
@@ -152,7 +152,7 @@ async function main() {
     console.log('🚀 Starting database migrations...\n')
     console.log(`📡 Connecting to database...`)
 
-    await client.connect()
+    // postgres client doesn't need explicit connect
 
     if (!(await verifyConnection(client))) {
       process.exit(1)
