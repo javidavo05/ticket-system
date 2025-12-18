@@ -137,11 +137,13 @@ export async function processScan(
   // Transition ticket state if needed (using state machine)
   // If this is the first scan and ticket is single-use, transition to USED
   if (validation.scanCount === 0) {
-    const { data: ticketType } = await supabase
+    const { data: ticketTypeData } = await (supabase
       .from('ticket_types')
       .select('is_multi_scan')
       .eq('id', validation.ticketId)
-      .single()
+      .single() as any)
+
+    const ticketType = ticketTypeData as any
 
     if (ticketType && !ticketType.is_multi_scan && validation.status === TICKET_STATUS.PAID) {
       try {
