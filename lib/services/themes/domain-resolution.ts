@@ -118,15 +118,17 @@ export async function resolveOrganizationFromDomain(
   const supabase = await createServiceRoleClient()
 
   // First, try to match by exact domain
-  const { data: orgByDomain } = await supabase
+  const { data: orgByDomainData } = await (supabase
     .from('organizations')
     .select('id, slug')
     .eq('domain', host)
     .eq('is_active', true)
     .is('deleted_at', null)
-    .single()
+    .single() as any)
 
-  if (orgByDomain) {
+  if (orgByDomainData) {
+    const orgByDomain = orgByDomainData as any
+
     const result: DomainResolutionResult = {
       organizationId: orgByDomain.id,
       organizationSlug: orgByDomain.slug,
@@ -173,17 +175,19 @@ export async function resolveOrganizationFromPath(
   const supabase = await createServiceRoleClient()
 
   // Query organizations by slug from path
-  const { data: org } = await supabase
+  const { data: orgData } = await (supabase
     .from('organizations')
     .select('id, slug')
     .eq('slug', tenant)
     .eq('is_active', true)
     .is('deleted_at', null)
-    .single()
+    .single() as any)
 
-  if (!org) {
+  if (!orgData) {
     return null
   }
+
+  const org = orgData as any
 
   const result: DomainResolutionResult = {
     organizationId: org.id,
