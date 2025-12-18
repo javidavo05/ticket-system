@@ -155,11 +155,13 @@ export async function resolveTheme(
     }
 
     // If event theme not found, get organization from event
-    const { data: event } = await supabase
+    const { data: eventData } = await (supabase
       .from('events')
       .select('organization_id')
       .eq('id', context.eventId)
-      .single()
+      .single() as any)
+
+    const event = eventData as any
 
     if (event?.organization_id) {
       context.organizationId = event.organization_id
