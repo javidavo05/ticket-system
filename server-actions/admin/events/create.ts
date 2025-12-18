@@ -40,7 +40,7 @@ export async function createEvent(formData: FormData) {
   }
 
   // Create event
-  const { data: event, error } = await supabase
+  const { data: event, error } = await ((supabase as any)
     .from('events')
     .insert({
       slug: validated.slug,
