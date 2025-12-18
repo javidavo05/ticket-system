@@ -68,7 +68,7 @@ export async function unpublishEvent(eventId: string) {
         newStatus: EVENT_STATUS.DRAFT,
       },
     },
-    request
+    request as any
   )
 
   return event
