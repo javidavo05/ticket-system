@@ -301,20 +301,22 @@ export async function deductBalance(
   const newBalance = currentBalance - amount
 
   // Get the next sequence number for this wallet
-  const { data: lastTransaction } = await supabase
+  const { data: lastTransactionData } = await (supabase
     .from('wallet_transactions')
     .select('sequence_number')
     .eq('wallet_id', wallet.id)
     .order('sequence_number', { ascending: false })
     .limit(1)
-    .single()
+    .single() as any)
+
+  const lastTransaction = lastTransactionData as any
 
   const nextSequenceNumber = lastTransaction
     ? parseInt(lastTransaction.sequence_number as string, 10) + 1
     : 1
 
   // Update wallet balance with optimistic locking
-  const { error: updateError } = await supabase
+  const { error: updateError } = await ((supabase as any)
     .from('wallets')
     .update({
       balance: newBalance.toFixed(2),
