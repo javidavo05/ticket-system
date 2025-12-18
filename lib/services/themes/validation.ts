@@ -192,7 +192,7 @@ export function safeValidateThemeConfig(
 ): { success: true; data: ThemeConfig } | { success: false; error: z.ZodError } {
   const result = themeConfigSchema.safeParse(config)
   if (result.success) {
-    return { success: true, data: result.data }
+    return { success: true, data: result.data as any as ThemeConfig }
   }
   return { success: false, error: result.error }
 }
