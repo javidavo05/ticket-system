@@ -330,7 +330,7 @@ export async function deductBalance(
   }
 
   // Create transaction record with idempotency key
-  const { data: transaction, error: transactionError } = await supabase
+  const { data: transaction, error: transactionError } = await ((supabase as any)
     .from('wallet_transactions')
     .insert({
       wallet_id: wallet.id,
@@ -352,7 +352,7 @@ export async function deductBalance(
       processed_at: new Date().toISOString(),
     })
     .select('id')
-    .single()
+    .single())
 
   if (transactionError) {
     // If it's a duplicate key error, the transaction was already created
