@@ -86,12 +86,12 @@ export async function updateEvent(eventId: string, data: {
   if (validatedWithStatus.status !== undefined) updateData.status = validatedWithStatus.status
 
   // Update event
-  const { data: updatedEvent, error: updateError } = await supabase
+  const { data: updatedEvent, error: updateError } = await ((supabase as any)
     .from('events')
     .update(updateData)
     .eq('id', eventId)
     .select()
-    .single()
+    .single())
 
   if (updateError || !updatedEvent) {
     throw new ValidationError(`Error al actualizar evento: ${updateError?.message}`)
