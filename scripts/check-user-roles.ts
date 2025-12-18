@@ -33,7 +33,7 @@ async function checkUserRoles(email?: string) {
       process.exit(1)
     }
 
-    const user = users[0]
+    const user = (users[0] as any)
     console.log('✅ Usuario encontrado:')
     console.log('   ID:', user.id)
     console.log('   Email:', user.email)
