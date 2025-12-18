@@ -196,22 +196,24 @@ export async function transitionTickets(
   }
 
   // Log audit events for each ticket
-  for (const ticket of tickets) {
+  for (const ticketItem of ticketsData) {
     await logAuditEvent(
       {
-        userId: userId || null,
+        userId: userId || undefined,
         action: 'ticket_state_transition',
         resourceType: 'ticket',
-        resourceId: ticket.id,
+        resourceId: ticketItem.id,
         changes: {
-          from: ticket.status,
-          to: newStatus,
-          reason: reason || null,
+          status: {
+            before: ticketItem.status,
+            after: newStatus,
+          },
         },
         metadata: {
-          ticketNumber: ticket.ticket_number,
-          eventId: ticket.event_id,
+          ticketNumber: ticketItem.ticket_number,
+          eventId: ticketItem.event_id,
           batchTransition: true,
+          reason: reason || null,
         },
       },
       request
