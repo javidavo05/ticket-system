@@ -110,7 +110,7 @@ export async function addBalance(
   let { data: wallet } = await query.single()
 
   if (!wallet) {
-    const { data: newWallet, error: createError } = await supabase
+    const { data: newWallet, error: createError } = await ((supabase as any)
       .from('wallets')
       .insert({
         user_id: userId,
@@ -118,7 +118,7 @@ export async function addBalance(
         balance: '0',
       })
       .select()
-      .single()
+      .single())
 
     if (createError || !newWallet) {
       throw new Error('Failed to create wallet')
@@ -127,7 +127,7 @@ export async function addBalance(
     wallet = newWallet
   }
 
-  const currentBalance = parseFloat(wallet.balance as string)
+  const currentBalance = parseFloat((wallet as any).balance as string)
   const newBalance = currentBalance + amount
 
   // Get the next sequence number for this wallet
