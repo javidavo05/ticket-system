@@ -33,11 +33,13 @@ export async function updateEvent(eventId: string, data: {
   const supabase = await createServiceRoleClient()
 
   // Get current event for validation
-  const { data: currentEvent, error: fetchError } = await supabase
+  const { data: currentEventData, error: fetchError } = await ((supabase as any)
     .from('events')
     .select('slug, status')
     .eq('id', eventId)
-    .single()
+    .single())
+
+  const currentEvent = currentEventData as any
 
   if (fetchError || !currentEvent) {
     throw new ValidationError('Evento no encontrado')
