@@ -39,13 +39,13 @@ export async function activateTheme(themeId: string) {
   }
 
   // Activate theme
-  const { error: updateError } = await supabase
+  const { error: updateError } = await ((supabase as any)
     .from('themes')
     .update({
       is_active: true,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', themeId)
+    .eq('id', themeId))
 
   if (updateError) {
     throw new Error(`Failed to activate theme: ${updateError.message}`)
@@ -70,7 +70,7 @@ export async function activateTheme(themeId: string) {
         themeName: theme.name,
       },
     },
-    request
+    request as any
   )
 
   return { success: true }
@@ -85,14 +85,21 @@ export async function deactivateTheme(themeId: string) {
   const supabase = await createServiceRoleClient()
 
   // Get theme info
-  const { data: theme, error: getError } = await supabase
+  const { data: themeData2, error: getError } = await supabase
     .from('themes')
     .select('id, name, is_active, version')
     .eq('id', themeId)
     .single()
 
-  if (getError || !theme) {
+  if (getError || !themeData2) {
     throw new NotFoundError('Theme')
+  }
+
+  const theme = themeData2 as {
+    id: string
+    name: string
+    is_active: boolean
+    version: number
   }
 
   if (!theme.is_active) {
@@ -100,13 +107,13 @@ export async function deactivateTheme(themeId: string) {
   }
 
   // Deactivate theme
-  const { error: updateError } = await supabase
+  const { error: updateError } = await ((supabase as any)
     .from('themes')
     .update({
       is_active: false,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', themeId)
+    .eq('id', themeId))
 
   if (updateError) {
     throw new Error(`Failed to deactivate theme: ${updateError.message}`)
@@ -131,7 +138,7 @@ export async function deactivateTheme(themeId: string) {
         themeName: theme.name,
       },
     },
-    request
+    request as any
   )
 
   return { success: true }
