@@ -191,7 +191,7 @@ export async function purchaseTickets(formData: FormData) {
     }
   } else {
     // Fallback: create payment items if they don't exist
-    await supabase.from('payment_items').insert(
+    await ((supabase as any).from('payment_items').insert(
       ticketIds.map(ticketId => ({
         payment_id: payment.id,
         ticket_id: ticketId,
@@ -199,7 +199,7 @@ export async function purchaseTickets(formData: FormData) {
         amount: ticketType.price,
         quantity: 1,
       }))
-    )
+    ))
   }
 
   // Record discount usage
