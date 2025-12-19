@@ -25,25 +25,33 @@ export async function deleteTheme(themeId: string) {
   const supabase = await createServiceRoleClient()
 
   // Get theme before deletion for audit
-  const { data: theme, error: getError } = await supabase
+  const { data: themeData, error: getError } = await supabase
     .from('themes')
     .select('id, name, version, organization_id, event_id')
     .eq('id', themeId)
     .single()
 
-  if (getError || !theme) {
+  if (getError || !themeData) {
     throw new ValidationError('Theme not found')
   }
 
+  const theme = themeData as {
+    id: string
+    name: string
+    version: number
+    organization_id: string | null
+    event_id: string | null
+  }
+
   // Soft delete: set deprecated_at and deactivate
-  const { error: deleteError } = await supabase
+  const { error: deleteError } = await ((supabase as any)
     .from('themes')
     .update({
       deprecated_at: new Date().toISOString(),
       is_active: false,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', themeId)
+    .eq('id', themeId))
 
   if (deleteError) {
     throw new Error(`Failed to delete theme: ${deleteError.message}`)
@@ -71,7 +79,7 @@ export async function deleteTheme(themeId: string) {
         eventId: theme.event_id,
       },
     },
-    request
+    request as any
   )
 
   return { success: true }

@@ -12,15 +12,17 @@ export async function getThemeById(themeId: string) {
   const supabase = await createServiceRoleClient()
 
   // Get theme
-  const { data: theme, error: themeError } = await supabase
+  const { data: themeData, error: themeError } = await supabase
     .from('themes')
     .select('*')
     .eq('id', themeId)
     .single()
 
-  if (themeError || !theme) {
+  if (themeError || !themeData) {
     throw new NotFoundError('Theme')
   }
+
+  const theme = themeData as any
 
   // Get assignments
   const assignments = await getThemeAssignments(themeId)
