@@ -137,8 +137,10 @@ export async function getPaymentDetails(paymentId: string) {
     throw new Error('Pago no encontrado o no tienes acceso')
   }
 
+  const paymentData = payment as any
+
   return {
-    ...payment,
+    ...paymentData,
     amount: parseFloat(payment.amount as string),
     amountPaid: parseFloat(payment.amount_paid as string || '0'),
     items: Array.isArray(payment.payment_items) ? payment.payment_items : [],
