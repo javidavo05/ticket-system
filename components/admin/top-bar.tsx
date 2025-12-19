@@ -2,7 +2,6 @@
 
 import { Bell, Search, User } from 'lucide-react'
 import Link from 'next/link'
-import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -30,10 +29,6 @@ interface TopBarProps {
 
 export function AdminTopBar({ user, className }: TopBarProps) {
   const router = useRouter()
-
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'components/admin/top-bar.tsx:31',message:'AdminTopBar render start',data:{hasUser:!!user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-  // #endregion
 
   const handleLogout = async () => {
     await logout()
@@ -73,9 +68,6 @@ export function AdminTopBar({ user, className }: TopBarProps) {
           {/* User menu */}
           {user && (
             <DropdownMenu>
-              {/* #region agent log */}
-              {fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'components/admin/top-bar.tsx:78',message:'Rendering DropdownMenuTrigger with asChild',data:{hasUser:!!user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{}) && null}
-              {/* #endregion */}
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="flex items-center gap-2">
                   <span className="flex items-center gap-2">
@@ -98,9 +90,6 @@ export function AdminTopBar({ user, className }: TopBarProps) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {/* #region agent log */}
-                {fetch('http://127.0.0.1:7243/ingest/e9e7bd44-e71b-4ac3-81d9-01326533b2eb',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'components/admin/top-bar.tsx:117',message:'Rendering DropdownMenuItem with asChild',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{}) && null}
-                {/* #endregion */}
                 <DropdownMenuItem asChild>
                   <Link href="/profile" className="flex items-center gap-2">
                     <span className="flex items-center gap-2">
