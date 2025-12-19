@@ -43,7 +43,7 @@ export async function resetPassword(newPassword: string) {
         method: 'email_reset',
       },
     },
-    request
+    request as any
   )
 
   return { success: true }
