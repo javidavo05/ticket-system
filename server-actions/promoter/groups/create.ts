@@ -142,7 +142,6 @@ export async function createTicketGroupAction(formData: FormData) {
       purchaserId: user.id,
       purchaserEmail: promoter.email || '',
       purchaserName: promoter.full_name || 'Promoter',
-      organizationId: event.organization_id || undefined,
     })
     ticketIds.push(ticketId)
   }
