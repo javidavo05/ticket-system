@@ -145,15 +145,17 @@ export async function purchaseTickets(formData: FormData) {
   })
 
   // Get payment record
-  const { data: payment, error: paymentError } = await supabase
+  const { data: paymentData, error: paymentError } = await supabase
     .from('payments')
     .select('*')
     .eq('id', paymentResult.paymentId)
     .single()
 
-  if (paymentError || !payment) {
+  if (paymentError || !paymentData) {
     throw new Error('Failed to retrieve created payment')
   }
+
+  const payment = paymentData as any
 
   // Generate tickets
   const ticketIds = await generateTickets({
