@@ -38,8 +38,8 @@ export async function logout() {
           method: 'manual_logout',
         },
       },
-      request
-    )
+    request as any
+  )
   }
 
   // Redirect to home page
