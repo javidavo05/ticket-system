@@ -89,7 +89,7 @@ export async function createTicketGroupAction(formData: FormData) {
   }
 
   // Create ticket group
-  const { data: group, error: groupError } = await supabase
+  const { data: group, error: groupError } = await ((supabase as any)
     .from('ticket_groups')
     .insert({
       event_id: validated.eventId,
@@ -107,7 +107,7 @@ export async function createTicketGroupAction(formData: FormData) {
       assigned_at: new Date().toISOString(),
     })
     .select()
-    .single()
+    .single())
 
   if (groupError || !group) {
     throw new Error(`Failed to create ticket group: ${groupError?.message}`)
