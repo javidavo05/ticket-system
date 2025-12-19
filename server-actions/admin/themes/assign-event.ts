@@ -27,14 +27,20 @@ export async function assignThemeToEvent(themeId: string, eventId: string) {
   const supabase = await createServiceRoleClient()
 
   // Check theme is active
-  const { data: theme, error: themeError } = await supabase
+  const { data: themeData, error: themeError } = await supabase
     .from('themes')
     .select('id, name, is_active')
     .eq('id', validated.themeId)
     .single()
 
-  if (themeError || !theme) {
+  if (themeError || !themeData) {
     throw new NotFoundError('Theme')
+  }
+
+  const theme = themeData as {
+    id: string
+    name: string
+    is_active: boolean
   }
 
   if (!theme.is_active) {
@@ -53,13 +59,13 @@ export async function assignThemeToEvent(themeId: string, eventId: string) {
   }
 
   // Update event with new theme
-  const { error: updateError } = await supabase
+  const { error: updateError } = await ((supabase as any)
     .from('events')
     .update({
       theme_id: validated.themeId,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', validated.eventId)
+    .eq('id', validated.eventId))
 
   if (updateError) {
     throw new Error(`Failed to assign theme to event: ${updateError.message}`)
