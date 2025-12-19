@@ -77,7 +77,7 @@ export async function createTheme(data: {
   }
 
   // Create theme
-  const { data: theme, error: themeError } = await supabase
+  const { data: theme, error: themeError } = await ((supabase as any)
     .from('themes')
     .insert({
       name: validated.name,
@@ -94,7 +94,7 @@ export async function createTheme(data: {
       created_by: user.id,
     })
     .select()
-    .single()
+    .single())
 
   if (themeError || !theme) {
     throw new Error(`Failed to create theme: ${themeError?.message}`)
@@ -109,14 +109,14 @@ export async function createTheme(data: {
   )
 
   // Update theme with version hash and cache key
-  const { error: updateError } = await supabase
+  const { error: updateError } = await ((supabase as any)
     .from('themes')
     .update({
       version_hash: version.versionHash,
       cache_key: generateThemeCacheKey(theme.id, version.version),
       published_at: new Date().toISOString(),
     })
-    .eq('id', theme.id)
+    .eq('id', theme.id))
 
   if (updateError) {
     throw new Error(`Failed to update theme with version info: ${updateError.message}`)
@@ -144,7 +144,7 @@ export async function createTheme(data: {
         schemaVersion: validated.schemaVersion || '1.0.0',
       },
     },
-    request
+    request as any
   )
 
   return {

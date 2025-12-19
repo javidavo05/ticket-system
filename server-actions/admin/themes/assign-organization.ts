@@ -27,14 +27,22 @@ export async function assignThemeToOrganization(themeId: string, organizationId:
   const supabase = await createServiceRoleClient()
 
   // Check theme is active
-  const { data: theme, error: themeError } = await supabase
+  const { data: themeData, error: themeError } = await supabase
     .from('themes')
     .select('id, name, is_active, organization_id, is_default')
     .eq('id', validated.themeId)
     .single()
 
-  if (themeError || !theme) {
+  if (themeError || !themeData) {
     throw new NotFoundError('Theme')
+  }
+
+  const theme = themeData as {
+    id: string
+    name: string
+    is_active: boolean
+    organization_id: string | null
+    is_default: boolean
   }
 
   if (!theme.is_active) {
@@ -42,18 +50,24 @@ export async function assignThemeToOrganization(themeId: string, organizationId:
   }
 
   // Get organization info for audit
-  const { data: organization, error: orgError } = await supabase
+  const { data: organizationData, error: orgError } = await supabase
     .from('organizations')
     .select('id, name, default_theme_id')
     .eq('id', validated.organizationId)
     .single()
 
-  if (orgError || !organization) {
+  if (orgError || !organizationData) {
     throw new NotFoundError('Organization')
   }
 
+  const organization = organizationData as {
+    id: string
+    name: string
+    default_theme_id: string | null
+  }
+
   // Check if another theme is already default for this organization
-  const { data: existingDefault, error: existingError } = await supabase
+  const { data: existingDefaultData, error: existingError } = await supabase
     .from('themes')
     .select('id, name')
     .eq('organization_id', validated.organizationId)
@@ -62,26 +76,28 @@ export async function assignThemeToOrganization(themeId: string, organizationId:
     .is('deprecated_at', null)
     .single()
 
+  const existingDefault = existingDefaultData as { id: string; name: string } | null
+
   if (existingDefault) {
     // Unset previous default
-    await supabase
+    await ((supabase as any)
       .from('themes')
       .update({
         is_default: false,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', existingDefault.id)
+      .eq('id', existingDefault.id))
   }
 
   // Update theme to be default for organization
-  const { error: updateError } = await supabase
+  const { error: updateError } = await ((supabase as any)
     .from('themes')
     .update({
       organization_id: validated.organizationId,
       is_default: true,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', validated.themeId)
+    .eq('id', validated.themeId))
 
   if (updateError) {
     throw new Error(`Failed to assign theme to organization: ${updateError.message}`)
@@ -109,7 +125,7 @@ export async function assignThemeToOrganization(themeId: string, organizationId:
         previousDefaultThemeId: existingDefault?.id || organization.default_theme_id || null,
       },
     },
-    request
+    request as any
   )
 
   return {
