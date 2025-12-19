@@ -16,6 +16,7 @@ import {
   Wallet,
   Menu,
   X,
+  Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import { Button } from '@/components/ui/button'
@@ -26,6 +27,10 @@ interface NavItem {
   label: string
   icon: React.ReactNode
   badge?: number
+}
+
+interface AdminSidebarProps {
+  isSuperAdmin?: boolean
 }
 
 const navItems: NavItem[] = [
@@ -42,7 +47,7 @@ const navItems: NavItem[] = [
   { href: '/admin/settings', label: 'Configuración', icon: <Settings className="h-5 w-5" /> },
 ]
 
-export function AdminSidebar() {
+export function AdminSidebar({ isSuperAdmin = false }: AdminSidebarProps) {
   const pathname = usePathname()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
 
@@ -104,6 +109,25 @@ export function AdminSidebar() {
                   </li>
                 )
               })}
+              {isSuperAdmin && (
+                <>
+                  <li className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800">
+                    <Link
+                      href="/super"
+                      onClick={() => setIsMobileOpen(false)}
+                      className={cn(
+                        'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                        pathname?.startsWith('/super')
+                          ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      )}
+                    >
+                      <Shield className="h-5 w-5" />
+                      <span>Super Admin</span>
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </nav>
         </div>

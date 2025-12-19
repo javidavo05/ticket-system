@@ -15,10 +15,10 @@ export default async function ProfilePage() {
     redirect('/login?redirect=/profile')
   }
 
-  // Super admins no tienen cuenta de tickets - redirigir a super admin panel
+  // Super admins no tienen cuenta de tickets - redirigir a admin dashboard
   const isSuper = await isSuperAdmin(user.id)
   if (isSuper) {
-    redirect('/super')
+    redirect('/admin/dashboard')
   }
 
   // Fetch profile data

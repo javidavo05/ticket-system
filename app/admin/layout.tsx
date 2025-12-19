@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth/permissions'
+import { isSuperAdmin } from '@/lib/supabase/rls'
 import { getProfile } from '@/server-actions/user/profile'
 import { AdminSidebar } from '@/components/admin/sidebar'
 import { AdminTopBar } from '@/components/admin/top-bar'
@@ -15,6 +16,9 @@ export default async function AdminLayout({
     redirect('/admin/login?redirect=/admin/dashboard')
   }
 
+  // Verificar si el usuario es super admin
+  const isSuper = await isSuperAdmin(user.id)
+
   let profile = null
   try {
     profile = await getProfile()
@@ -24,7 +28,7 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      <AdminSidebar />
+      <AdminSidebar isSuperAdmin={isSuper} />
       <div className="lg:pl-64">
         <AdminTopBar
           user={

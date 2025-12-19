@@ -50,20 +50,17 @@ export async function GET(request: NextRequest) {
 
         // Determinar redirección según rol si no hay 'next' especificado
         if (!next) {
-          if (isSuper) {
-            next = '/super'
+          // Verificar roles de admin (incluyendo super admin)
+          const isEventAdmin = await hasRole(data.user.id, ROLES.EVENT_ADMIN)
+          const isAccounting = await hasRole(data.user.id, ROLES.ACCOUNTING)
+          const isScanner = await hasRole(data.user.id, ROLES.SCANNER)
+          const isPromoter = await hasRole(data.user.id, ROLES.PROMOTER)
+          
+          // Super admins y otros admins van al dashboard general
+          if (isSuper || isEventAdmin || isAccounting || isScanner || isPromoter) {
+            next = '/admin/dashboard'
           } else {
-            // Verificar otros roles de admin
-            const isEventAdmin = await hasRole(data.user.id, ROLES.EVENT_ADMIN)
-            const isAccounting = await hasRole(data.user.id, ROLES.ACCOUNTING)
-            const isScanner = await hasRole(data.user.id, ROLES.SCANNER)
-            const isPromoter = await hasRole(data.user.id, ROLES.PROMOTER)
-            
-            if (isEventAdmin || isAccounting || isScanner || isPromoter) {
-              next = '/admin/dashboard'
-            } else {
-              next = '/profile'
-            }
+            next = '/profile'
           }
         }
       } catch (syncError) {

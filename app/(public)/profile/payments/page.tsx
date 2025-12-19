@@ -16,10 +16,10 @@ export default async function PaymentsPage({
     redirect('/login?redirect=/profile/payments')
   }
 
-  // Super admins no tienen cuenta de tickets - redirigir a super admin panel
+  // Super admins no tienen cuenta de tickets - redirigir a admin dashboard
   const isSuper = await isSuperAdmin(user.id)
   if (isSuper) {
-    redirect('/super')
+    redirect('/admin/dashboard')
   }
 
   const page = parseInt(searchParams.page || '1')
