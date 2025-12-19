@@ -48,7 +48,19 @@ export async function getUserPayments(limit: number = 50, offset: number = 0) {
     throw new Error(`Error al obtener historial de pagos: ${error.message}`)
   }
 
-  return (payments || []).map((payment) => ({
+  const paymentsList = (payments || []) as Array<{
+    id: string
+    amount: string | number
+    amount_paid: string | number | null
+    currency: string
+    status: string
+    provider: string
+    payment_method: string
+    created_at: string
+    [key: string]: any
+  }>
+
+  return paymentsList.map((payment) => ({
     id: payment.id,
     amount: parseFloat(payment.amount as string),
     amountPaid: parseFloat(payment.amount_paid as string || '0'),
