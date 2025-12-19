@@ -34,7 +34,7 @@ export async function manualValidateTicketAction(
     headers: headersList,
   })
 
-  return await manualValidateTicket(ticketId, user.id, notes, location, request)
+  return await manualValidateTicket(ticketId, user.id, notes, location, request as any)
 }
 
 /**

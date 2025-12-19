@@ -35,7 +35,7 @@ export async function manualRevokeTicketAction(ticketId: string, reason: string)
     headers: headersList,
   })
 
-  await revokeTicket(ticketId, reason, user.id, request)
+  await revokeTicket(ticketId, reason, user.id, request as any)
 
   return { success: true, message: 'Ticket revocado exitosamente' }
 }
@@ -62,7 +62,7 @@ export async function revokeTicketsByPaymentAction(paymentId: string, reason: st
     headers: headersList,
   })
 
-  await revokeTicketsByPayment(paymentId, reason, user.id, request)
+  await revokeTicketsByPayment(paymentId, reason, user.id, request as any)
 
   return { success: true, message: 'Tickets revoked successfully' }
 }
@@ -82,7 +82,7 @@ export async function revokeTicketsByEventAction(eventId: string, reason: string
     headers: headersList,
   })
 
-  const count = await revokeTicketsByEvent(eventId, reason, user.id, request)
+  const count = await revokeTicketsByEvent(eventId, reason, user.id, request as any)
 
   return {
     success: true,
