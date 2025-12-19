@@ -118,14 +118,19 @@ export async function createTicketGroupAction(formData: FormData) {
   }
 
   // Get promoter info
-  const { data: promoter, error: promoterError } = await supabase
+  const { data: promoterData, error: promoterError } = await supabase
     .from('users')
     .select('email, full_name')
     .eq('id', user.id)
     .single()
 
-  if (promoterError || !promoter) {
+  if (promoterError || !promoterData) {
     throw new NotFoundError('Promoter')
+  }
+
+  const promoter = promoterData as {
+    email: string | null
+    full_name: string | null
   }
 
   // Generate tickets for the group
