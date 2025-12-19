@@ -199,7 +199,17 @@ export async function getTicketHistory(limit: number = 50, offset: number = 0) {
     throw new Error(`Error al obtener historial de tickets: ${error.message}`)
   }
 
-  return (tickets || []).map((ticket) => ({
+  const ticketsList = (tickets || []) as Array<{
+    id: string
+    ticket_number: string
+    status: string
+    created_at: string
+    events: any
+    ticket_types: any
+    payments: any
+  }>
+
+  return ticketsList.map((ticket) => ({
     id: ticket.id,
     ticketNumber: ticket.ticket_number,
     status: ticket.status,
