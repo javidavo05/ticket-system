@@ -52,7 +52,7 @@ export async function publishThemeVersionAction(themeId: string, version: number
         schemaVersion: publishedTheme.config ? '1.0.0' : null, // Would need to get from DB
       },
     },
-    request
+    request as any
   )
 
   return {

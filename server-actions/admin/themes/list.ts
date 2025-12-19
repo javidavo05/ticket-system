@@ -63,13 +63,24 @@ export async function listThemes(filters?: {
     .order('created_at', { ascending: false })
     .range(validated.offset, validated.offset + validated.limit - 1)
 
-  const { data: themes, error } = await query
+  const { data: themesData, error } = await query
 
   if (error) {
     throw new Error(`Failed to list themes: ${error.message}`)
   }
 
-  return (themes || []).map((theme) => ({
+  const themes = (themesData || []) as Array<{
+    id: string
+    name: string
+    version: number
+    organization_id: string | null
+    event_id: string | null
+    is_default: boolean
+    is_active: boolean
+    [key: string]: any
+  }>
+
+  return themes.map((theme) => ({
     id: theme.id,
     name: theme.name,
     version: theme.version as number,

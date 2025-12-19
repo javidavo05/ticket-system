@@ -55,7 +55,7 @@ export async function rollbackThemeVersion(themeId: string, targetVersion: numbe
         toVersion: validated.version,
       },
     },
-    request
+    request as any
   )
 
   return {
