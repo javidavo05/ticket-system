@@ -36,7 +36,7 @@ export async function updateCashlessSettings(data: {
         },
       },
     },
-    request
+    request as any
   )
 
   return { success: true }
