@@ -133,7 +133,7 @@ export async function purchaseTickets(formData: FormData) {
       eventId: validated.eventId,
       quantity: validated.quantity,
       discountCode: validated.discountCode,
-      returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/tickets/success?payment=${paymentResult?.paymentId || 'pending'}`,
+      returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/tickets/success?payment=pending`,
       cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/events/${validated.eventId}?cancelled=true`,
     },
     items: [{
