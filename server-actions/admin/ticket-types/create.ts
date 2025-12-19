@@ -98,7 +98,7 @@ export async function createTicketType(eventId: string, data: {
         price: validated.price,
       },
     },
-    request
+    request as any
   )
 
   return ticketType
