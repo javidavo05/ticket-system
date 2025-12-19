@@ -44,11 +44,11 @@ export async function registerUser(data: {
 
   // Crear registro en tabla users
   const serviceClient = await createServiceRoleClient()
-  const { error: userError } = await serviceClient.from('users').insert({
+  const { error: userError } = await ((serviceClient as any).from('users').insert({
     id: authData.user.id,
     email: validated.email,
     full_name: validated.fullName || null,
-  })
+  }))
 
   if (userError) {
     // Si falla la inserción en users pero el usuario de auth se creó,
