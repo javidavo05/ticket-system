@@ -47,7 +47,7 @@ export async function bulkAssignTicketsAction(formData: FormData) {
 
   const validated = bulkAssignTicketsSchema.parse({ groupId, assignments })
 
-  const result = await bulkAssignTickets(validated.groupId, user.id, validated.assignments)
+  const result = await bulkAssignTickets(validated.groupId, user.id, validated.assignments as Array<{ email: string; name: string; phone?: string }>)
 
   return result
 }
