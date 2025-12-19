@@ -248,15 +248,22 @@ export async function redownloadTicket(ticketId: string) {
   const supabase = await createServiceRoleClient()
 
   // Verify ticket belongs to user
-  const { data: ticket, error: ticketError } = await supabase
+  const { data: ticketData, error: ticketError } = await supabase
     .from('tickets')
     .select('id, ticket_number, purchaser_id, events!inner (name)')
     .eq('id', ticketId)
     .eq('purchaser_id', user.id)
     .single()
 
-  if (ticketError || !ticket) {
+  if (ticketError || !ticketData) {
     throw new TicketAccessError('Ticket no encontrado o no tienes acceso')
+  }
+
+  const ticket = ticketData as {
+    id: string
+    ticket_number: string
+    purchaser_id: string | null
+    events: any
   }
 
   // Generate new secure ticket URL
