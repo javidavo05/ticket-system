@@ -44,15 +44,24 @@ export async function getPromoterGroupsAction(formData: FormData) {
     query = query.eq('status', validated.status)
   }
 
-  const { data: groups, error } = await query
+  const { data: groupsData, error } = await query
 
   if (error) {
     throw new Error(`Failed to fetch groups: ${error.message}`)
   }
 
+  const groups = (groupsData || []) as Array<{
+    total_amount: string | number
+    amount_paid: string | number
+    total_tickets: number
+    tickets_assigned: number
+    tickets_sold: number
+    [key: string]: any
+  }>
+
   // Calculate statistics for each group
   const groupsWithStats = await Promise.all(
-    (groups || []).map(async (group) => {
+    groups.map(async (group) => {
       const totalAmount = parseFloat(group.total_amount as string)
       const amountPaid = parseFloat(group.amount_paid as string)
       const remainingAmount = totalAmount - amountPaid
