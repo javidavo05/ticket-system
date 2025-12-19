@@ -35,7 +35,14 @@ export async function getTicketTypesForEvent(eventId: string) {
   }
 
   // Calculate available quantity for each
-  return (ticketTypes || []).map((tt) => ({
+  const ticketTypesList = (ticketTypes || []) as Array<{
+    [key: string]: any
+    quantity_available: number
+    quantity_sold: number | null
+    price: string | number
+  }>
+
+  return ticketTypesList.map((tt) => ({
     ...tt,
     available: Math.max(0, tt.quantity_available - (tt.quantity_sold || 0)),
     price: parseFloat(tt.price as string),

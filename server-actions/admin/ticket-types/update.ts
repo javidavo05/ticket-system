@@ -26,14 +26,20 @@ export async function updateTicketType(ticketTypeId: string, data: {
   const supabase = await createServiceRoleClient()
 
   // Get current ticket type
-  const { data: currentTicketType, error: fetchError } = await supabase
+  const { data: currentTicketTypeData, error: fetchError } = await supabase
     .from('ticket_types')
     .select('event_id, quantity_available, quantity_sold')
     .eq('id', ticketTypeId)
     .single()
 
-  if (fetchError || !currentTicketType) {
+  if (fetchError || !currentTicketTypeData) {
     throw new ValidationError('Tipo de ticket no encontrado')
+  }
+
+  const currentTicketType = currentTicketTypeData as {
+    event_id: string
+    quantity_available: number
+    quantity_sold: number | null
   }
 
   // Validate permissions for event
