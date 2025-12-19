@@ -103,12 +103,12 @@ export async function updateTicketType(ticketTypeId: string, data: {
   if (validated.saleEnd !== undefined) updateData.sale_end = validated.saleEnd || null
 
   // Update ticket type
-  const { data: updatedTicketType, error: updateError } = await supabase
+  const { data: updatedTicketType, error: updateError } = await ((supabase as any)
     .from('ticket_types')
     .update(updateData)
     .eq('id', ticketTypeId)
     .select()
-    .single()
+    .single())
 
   if (updateError || !updatedTicketType) {
     throw new ValidationError(`Error al actualizar tipo de ticket: ${updateError?.message}`)
@@ -127,11 +127,16 @@ export async function updateTicketType(ticketTypeId: string, data: {
       resourceType: 'ticket_type',
       resourceId: ticketTypeId,
       changes: {
-        before: currentTicketType,
-        after: updateData,
+        ...Object.keys(updateData).reduce((acc, key) => {
+          acc[key] = {
+            before: (currentTicketType as any)[key],
+            after: updateData[key],
+          }
+          return acc
+        }, {} as Record<string, { before: unknown; after: unknown }>),
       },
     },
-    request
+    request as any
   )
 
   return updatedTicketType
