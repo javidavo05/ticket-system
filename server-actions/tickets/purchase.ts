@@ -57,14 +57,20 @@ export async function purchaseTickets(formData: FormData) {
 
   // Get ticket type for pricing
   const supabase = await createServiceRoleClient()
-  const { data: ticketType, error: ticketTypeError } = await supabase
+  const { data: ticketTypeData, error: ticketTypeError } = await supabase
     .from('ticket_types')
     .select('price, event_id, organization_id')
     .eq('id', validated.ticketTypeId)
     .single()
 
-  if (ticketTypeError || !ticketType) {
+  if (ticketTypeError || !ticketTypeData) {
     throw new NotFoundError('Ticket type')
+  }
+
+  const ticketType = ticketTypeData as {
+    price: string | number
+    event_id: string
+    organization_id: string | null
   }
 
   // Calculate total
