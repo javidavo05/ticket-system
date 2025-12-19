@@ -117,9 +117,10 @@ export async function cancelPaymentAction(
     throw new Error('Payment not found')
   }
 
+  const paymentData = payment as any
   const validation = canCancelPayment({
-    ...payment,
-    status: payment.status as any,
+    ...paymentData,
+    status: paymentData.status,
   } as any)
 
   if (!validation.canCancel) {
