@@ -150,7 +150,7 @@ export async function updateProfile(data: {
         }, {} as Record<string, { before: unknown; after: unknown }>),
       },
     },
-    request
+    request as any
   )
 
   return { success: true }
@@ -270,7 +270,7 @@ export async function redownloadTicket(ticketId: string) {
         eventName: Array.isArray(ticket.events) ? ticket.events[0]?.name : ticket.events?.name,
       },
     },
-    request
+    request as any
   )
 
   return { ticketUrl }
@@ -334,7 +334,7 @@ export async function changePassword(currentPassword: string, newPassword: strin
         method: 'profile_change',
       },
     },
-    request
+    request as any
   )
 
   return { success: true }
