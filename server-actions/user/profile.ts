@@ -141,16 +141,13 @@ export async function updateProfile(data: {
       resourceType: 'user',
       resourceId: user.id,
       changes: {
-        before: {
-          fullName: currentProfile?.full_name,
-          phone: currentProfile?.phone,
-          profilePhotoUrl: currentProfile?.profile_photo_url,
-        },
-        after: {
-          fullName: validated.fullName,
-          phone: validated.phone,
-          profilePhotoUrl: validated.profilePhotoUrl,
-        },
+        ...Object.keys(updateData).reduce((acc, key) => {
+          acc[key] = {
+            before: (currentProfile as any)?.[key],
+            after: updateData[key],
+          }
+          return acc
+        }, {} as Record<string, { before: unknown; after: unknown }>),
       },
     },
     request
