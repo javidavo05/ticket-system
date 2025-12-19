@@ -6,7 +6,8 @@ import { extendPaymentExpiration } from '@/lib/services/payments/expiration'
 import { transitionPayment } from '@/lib/services/payments/state-machine'
 import { canCancelPayment } from '@/lib/services/payments/domain'
 import { PAYMENT_STATUS } from '@/lib/utils/constants'
-import { requireAccounting, requireEventAdmin, getCurrentUser } from '@/lib/auth/permissions'
+import { requireAccounting, requireRole, getCurrentUser } from '@/lib/auth/permissions'
+import { ROLES } from '@/lib/utils/constants'
 import { headers } from 'next/headers'
 
 /**
@@ -27,7 +28,7 @@ export async function createPartialPaymentAction(
     await requireAccounting()
   } catch {
     // Try event admin
-    await requireEventAdmin()
+    await requireRole(ROLES.EVENT_ADMIN)
   }
 
   return await createPartialPayment(paymentId, amount, provider)
@@ -73,7 +74,7 @@ export async function extendPaymentExpirationAction(
   try {
     await requireAccounting()
   } catch {
-    await requireEventAdmin()
+    await requireRole(ROLES.EVENT_ADMIN)
   }
 
   return await extendPaymentExpiration(paymentId, newExpirationDate, user.id)
@@ -95,7 +96,7 @@ export async function cancelPaymentAction(
   try {
     await requireAccounting()
   } catch {
-    await requireEventAdmin()
+    await requireRole(ROLES.EVENT_ADMIN)
   }
 
   const headersList = await headers()
