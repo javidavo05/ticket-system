@@ -48,14 +48,21 @@ export async function assignThemeToEvent(themeId: string, eventId: string) {
   }
 
   // Get event info for audit
-  const { data: event, error: eventError } = await supabase
+  const { data: eventData, error: eventError } = await supabase
     .from('events')
     .select('id, name, slug, theme_id')
     .eq('id', validated.eventId)
     .single()
 
-  if (eventError || !event) {
+  if (eventError || !eventData) {
     throw new NotFoundError('Event')
+  }
+
+  const event = eventData as {
+    id: string
+    name: string
+    slug: string
+    theme_id: string | null
   }
 
   // Update event with new theme
@@ -94,7 +101,7 @@ export async function assignThemeToEvent(themeId: string, eventId: string) {
         previousThemeId: event.theme_id || null,
       },
     },
-    request
+    request as any
   )
 
   return {
