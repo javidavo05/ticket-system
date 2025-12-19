@@ -210,10 +210,10 @@ export async function purchaseTickets(formData: FormData) {
       user_id: user?.id || null,
     }))
 
-    await supabase
+    await ((supabase as any)
       .from('discounts')
-      .update({ uses_count: supabase.raw('uses_count + 1') })
-      .eq('id', discountId)
+      .update({ uses_count: (supabase as any).raw('uses_count + 1') })
+      .eq('id', discountId))
   }
 
   // Log audit event
