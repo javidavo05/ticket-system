@@ -169,13 +169,17 @@ export async function purchaseTickets(formData: FormData) {
 
   // Update payment items (they were created by createPayment, but we need to link tickets)
   // First, get existing payment items
-  const { data: existingItems } = await supabase
+  const { data: existingItemsData } = await supabase
     .from('payment_items')
     .select('id')
     .eq('payment_id', payment.id)
     .limit(validated.quantity)
 
-  if (existingItems && existingItems.length > 0) {
+  const existingItems = (existingItemsData || []) as Array<{
+    id: string
+  }>
+
+  if (existingItems.length > 0) {
     // Update items with ticket IDs
     for (let i = 0; i < Math.min(existingItems.length, ticketIds.length); i++) {
       await ((supabase as any)
