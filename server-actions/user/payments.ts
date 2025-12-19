@@ -141,10 +141,10 @@ export async function getPaymentDetails(paymentId: string) {
 
   return {
     ...paymentData,
-    amount: parseFloat(payment.amount as string),
-    amountPaid: parseFloat(payment.amount_paid as string || '0'),
-    items: Array.isArray(payment.payment_items) ? payment.payment_items : [],
-    transactions: Array.isArray(payment.payment_transactions) ? payment.payment_transactions : [],
+    amount: parseFloat(paymentData.amount as string),
+    amountPaid: parseFloat(paymentData.amount_paid as string || '0'),
+    items: Array.isArray(paymentData.payment_items) ? paymentData.payment_items : [],
+    transactions: Array.isArray(paymentData.payment_transactions) ? paymentData.payment_transactions : [],
   }
 }
 
