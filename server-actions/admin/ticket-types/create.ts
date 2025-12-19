@@ -58,7 +58,7 @@ export async function createTicketType(eventId: string, data: {
   const supabase = await createServiceRoleClient()
 
   // Create ticket type
-  const { data: ticketType, error } = await supabase
+  const { data: ticketType, error } = await ((supabase as any)
     .from('ticket_types')
     .insert({
       event_id: eventId,
@@ -74,7 +74,7 @@ export async function createTicketType(eventId: string, data: {
       sale_end: validated.saleEnd || null,
     })
     .select()
-    .single()
+    .single())
 
   if (error || !ticketType) {
     throw new ValidationError(`Error al crear tipo de ticket: ${error?.message}`)

@@ -34,15 +34,17 @@ export async function updateTheme(
   const supabase = await createServiceRoleClient()
 
   // Get current theme for comparison
-  const { data: currentTheme, error: getError } = await supabase
+  const { data: currentThemeData, error: getError } = await supabase
     .from('themes')
     .select('*')
     .eq('id', themeId)
     .single()
 
-  if (getError || !currentTheme) {
+  if (getError || !currentThemeData) {
     throw new NotFoundError('Theme')
   }
+
+  const currentTheme = currentThemeData as any
 
   const changes: Record<string, { before: unknown; after: unknown }> = {}
   const updates: Record<string, unknown> = {}
@@ -115,10 +117,10 @@ export async function updateTheme(
   if (Object.keys(updates).length > 0) {
     updates.updated_at = new Date().toISOString()
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await ((supabase as any)
       .from('themes')
       .update(updates)
-      .eq('id', themeId)
+      .eq('id', themeId))
 
     if (updateError) {
       throw new Error(`Failed to update theme: ${updateError.message}`)
@@ -146,7 +148,7 @@ export async function updateTheme(
         newVersion: newVersion !== currentTheme.version ? newVersion : undefined,
       },
     },
-    request
+    request as any
   )
 
   return {
