@@ -39,7 +39,7 @@ export async function updatePaymentProvider(
         },
       },
     },
-    request
+    request as any
   )
 
   return { success: true }
