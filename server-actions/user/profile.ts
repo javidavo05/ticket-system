@@ -34,18 +34,28 @@ export async function getProfile() {
     throw new Error('Error al obtener perfil')
   }
 
+  const profileData = profile as {
+    id: string
+    email: string
+    full_name: string | null
+    phone: string | null
+    profile_photo_url: string | null
+    created_at: string
+    updated_at: string
+  }
+
   // Get wallet balance (from wallets table for accuracy)
   const walletBalance = await getBalance(user.id)
 
   return {
-    id: profile.id,
-    email: profile.email,
-    fullName: profile.full_name,
-    phone: profile.phone,
-    profilePhotoUrl: profile.profile_photo_url,
+    id: profileData.id,
+    email: profileData.email,
+    fullName: profileData.full_name,
+    phone: profileData.phone,
+    profilePhotoUrl: profileData.profile_photo_url,
     walletBalance,
-    createdAt: profile.created_at,
-    updatedAt: profile.updated_at,
+    createdAt: profileData.created_at,
+    updatedAt: profileData.updated_at,
   }
 }
 
