@@ -32,7 +32,7 @@ export async function updateNFCSettings(data: {
         },
       },
     },
-    request
+    request as any
   )
 
   return { success: true }
