@@ -55,6 +55,26 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       lg: 'h-12 px-6 text-base',
     }
 
+    // When asChild is true, Slot expects exactly one child
+    // So we can't render leftIcon/rightIcon/loading separately
+    if (asChild) {
+      return (
+        <Comp
+          ref={ref}
+          className={cn(
+            baseStyles,
+            variants[variant],
+            sizes[size],
+            className
+          )}
+          disabled={isDisabled}
+          {...props}
+        >
+          {children}
+        </Comp>
+      )
+    }
+
     return (
       <Comp
         ref={ref}
