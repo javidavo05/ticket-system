@@ -53,13 +53,13 @@ export async function registerUser(data: {
   if (userError) {
     // Si falla la inserción en users pero el usuario de auth se creó,
     // intentar actualizar en lugar de insertar
-    const { error: updateError } = await serviceClient
-      .from('users')
-      .update({
-        email: validated.email,
-        full_name: validated.fullName || null,
-      })
-      .eq('id', authData.user.id)
+  const { error: updateError } = await ((serviceClient as any)
+    .from('users')
+    .update({
+      email: validated.email,
+      full_name: validated.fullName || null,
+    })
+    .eq('id', authData.user.id))
 
     if (updateError) {
       console.error('Error al crear/actualizar usuario en tabla users:', updateError)
