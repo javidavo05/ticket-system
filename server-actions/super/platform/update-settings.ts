@@ -44,7 +44,7 @@ export async function updatePlatformSettings(data: {
         },
       },
     },
-    request
+    request as any
   )
 
   return { success: true }
