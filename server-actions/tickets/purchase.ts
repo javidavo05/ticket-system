@@ -204,11 +204,11 @@ export async function purchaseTickets(formData: FormData) {
 
   // Record discount usage
   if (discountId) {
-    await supabase.from('discount_usage').insert({
+    await ((supabase as any).from('discount_usage').insert({
       discount_id: discountId,
       payment_id: payment.id,
       user_id: user?.id || null,
-    })
+    }))
 
     await supabase
       .from('discounts')
