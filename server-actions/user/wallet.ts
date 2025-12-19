@@ -13,19 +13,21 @@ export async function getWalletTransactions(limit: number = 50, offset: number =
   const supabase = await createServiceRoleClient()
 
   // Get wallet first
-  const { data: wallet, error: walletError } = await supabase
+  const { data: walletData, error: walletError } = await supabase
     .from('wallets')
     .select('id')
     .eq('user_id', user.id)
     .single()
 
-  if (walletError || !wallet) {
+  if (walletError || !walletData) {
     // Return empty array if wallet doesn't exist
     return []
   }
 
+  const wallet = walletData as { id: string }
+
   // Get transactions
-  const { data: transactions, error } = await supabase
+  const { data: transactionsData, error } = await supabase
     .from('wallet_transactions')
     .select(`
       id,
@@ -51,7 +53,20 @@ export async function getWalletTransactions(limit: number = 50, offset: number =
     throw new Error(`Error al obtener transacciones: ${error.message}`)
   }
 
-  return (transactions || []).map((txn) => ({
+  const transactions = (transactionsData || []) as Array<{
+    id: string
+    transaction_type: string
+    amount: string | number
+    balance_after: string | number
+    reference_type: string | null
+    reference_id: string | null
+    description: string | null
+    event_id: string | null
+    created_at: string
+    events: any
+  }>
+
+  return transactions.map((txn) => ({
     id: txn.id,
     type: txn.transaction_type,
     amount: parseFloat(txn.amount as string),
@@ -110,7 +125,7 @@ export async function getWalletStats() {
     balance,
     totalCredits,
     totalDebits,
-    transactionCount: transactions?.length || 0,
+    transactionCount: transactions.length,
   }
 }
 
