@@ -15,14 +15,20 @@ export async function deleteTicketType(ticketTypeId: string) {
   const supabase = await createServiceRoleClient()
 
   // Get ticket type
-  const { data: ticketType, error: fetchError } = await supabase
+  const { data: ticketTypeData, error: fetchError } = await supabase
     .from('ticket_types')
     .select('id, event_id, name')
     .eq('id', ticketTypeId)
     .single()
 
-  if (fetchError || !ticketType) {
+  if (fetchError || !ticketTypeData) {
     throw new ValidationError('Tipo de ticket no encontrado')
+  }
+
+  const ticketType = ticketTypeData as {
+    id: string
+    event_id: string
+    name: string
   }
 
   // Validate permissions for event
@@ -65,7 +71,7 @@ export async function deleteTicketType(ticketTypeId: string) {
         name: ticketType.name,
       },
     },
-    request
+    request as any
   )
 
   return { success: true }
