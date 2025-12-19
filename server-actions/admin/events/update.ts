@@ -39,11 +39,11 @@ export async function updateEvent(eventId: string, data: {
     .eq('id', eventId)
     .single())
 
-  const currentEvent = currentEventData as any
-
-  if (fetchError || !currentEvent) {
+  if (fetchError || !currentEventData) {
     throw new ValidationError('Evento no encontrado')
   }
+
+  const currentEvent = currentEventData as { slug: string; status: string }
 
   // Validate slug uniqueness if changing
   if (validated.slug && validated.slug !== currentEvent.slug) {
