@@ -147,14 +147,14 @@ export async function createTicketGroupAction(formData: FormData) {
   }
 
   // Update tickets with group_id and promoter_id
-  const { error: updateError } = await supabase
+  const { error: updateError } = await ((supabase as any)
     .from('tickets')
     .update({
       ticket_group_id: group.id,
       promoter_id: user.id,
       status: TICKET_STATUS.ISSUED,
     })
-    .in('id', ticketIds)
+    .in('id', ticketIds))
 
   if (updateError) {
     throw new Error(`Failed to link tickets to group: ${updateError.message}`)
