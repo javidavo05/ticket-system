@@ -68,8 +68,13 @@ export async function createTicketGroupAction(formData: FormData) {
     throw new NotFoundError('Ticket type')
   }
 
+  const ticketTypeData = ticketType as {
+    price: string | number
+    [key: string]: any
+  }
+
   // Calculate total amount
-  const price = parseFloat(ticketType.price as string)
+  const price = parseFloat(ticketTypeData.price as string)
   const totalAmount = price * validated.quantity
 
   // Get event organization
