@@ -26,7 +26,7 @@ export async function rotateWebhookSecret(id: string) {
         providerId: id,
       },
     },
-    request
+    request as any
   )
 
   return { success: true, secret: newSecret }
