@@ -49,13 +49,27 @@ export async function getAuditLogs(filters?: {
     query = query.range(filters.offset, filters.offset + (filters.limit || 50) - 1)
   }
 
-  const { data, error } = await query
+  const { data: logsData, error } = await query
 
   if (error) {
     throw new Error(`Failed to fetch audit logs: ${error.message}`)
   }
 
-  return (data || []).map((log) => ({
+  const logs = (logsData || []) as Array<{
+    id: string
+    user_id: string | null
+    action: string
+    resource_type: string
+    resource_id: string
+    changes: any
+    metadata: any
+    ip_address: string | null
+    user_agent: string | null
+    created_at: string
+    [key: string]: any
+  }>
+
+  return logs.map((log) => ({
     id: log.id,
     userId: log.user_id,
     action: log.action,
