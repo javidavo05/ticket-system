@@ -178,12 +178,12 @@ export async function purchaseTickets(formData: FormData) {
   if (existingItems && existingItems.length > 0) {
     // Update items with ticket IDs
     for (let i = 0; i < Math.min(existingItems.length, ticketIds.length); i++) {
-      await supabase
+      await ((supabase as any)
         .from('payment_items')
         .update({
           ticket_id: ticketIds[i] || null,
         })
-        .eq('id', existingItems[i].id)
+        .eq('id', existingItems[i].id))
     }
   } else {
     // Fallback: create payment items if they don't exist
