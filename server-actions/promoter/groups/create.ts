@@ -78,14 +78,18 @@ export async function createTicketGroupAction(formData: FormData) {
   const totalAmount = price * validated.quantity
 
   // Get event organization
-  const { data: event, error: eventError } = await supabase
+  const { data: eventData, error: eventError } = await supabase
     .from('events')
     .select('organization_id')
     .eq('id', validated.eventId)
     .single()
 
-  if (eventError || !event) {
+  if (eventError || !eventData) {
     throw new NotFoundError('Event')
+  }
+
+  const event = eventData as {
+    organization_id: string | null
   }
 
   // Create ticket group
