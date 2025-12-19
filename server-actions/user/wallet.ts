@@ -68,13 +68,10 @@ export async function getWalletTransactions(limit: number = 50, offset: number =
 
   return transactions.map((txn) => ({
     id: txn.id,
-    type: txn.transaction_type,
+    type: txn.transaction_type as 'credit' | 'debit',
     amount: parseFloat(txn.amount as string),
     balanceAfter: parseFloat(txn.balance_after as string),
-    referenceType: txn.reference_type,
-    referenceId: txn.reference_id,
     description: txn.description,
-    eventId: txn.event_id,
     createdAt: txn.created_at,
     event: Array.isArray(txn.events) ? txn.events[0] : txn.events,
   }))
