@@ -19,7 +19,7 @@ export async function purchaseTickets(formData: FormData) {
 
   // Rate limiting
   const rateLimitKey = getRateLimitKey(request, 'purchase')
-  const rateLimitResult = await rateLimit(request, rateLimitKey, {
+  const rateLimitResult = await rateLimit(request as any, rateLimitKey, {
     requests: 10,
     window: 60,
   })
