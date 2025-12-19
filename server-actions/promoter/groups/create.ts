@@ -161,13 +161,13 @@ export async function createTicketGroupAction(formData: FormData) {
   }
 
   // Update group status to active
-  const { error: statusError } = await supabase
+  const { error: statusError } = await ((supabase as any)
     .from('ticket_groups')
     .update({
       status: 'active',
       updated_at: new Date().toISOString(),
     })
-    .eq('id', group.id)
+    .eq('id', group.id))
 
   if (statusError) {
     throw new Error(`Failed to activate group: ${statusError.message}`)
