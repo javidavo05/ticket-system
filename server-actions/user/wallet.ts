@@ -89,11 +89,13 @@ export async function getWalletStats() {
   const balance = await getBalance(user.id)
 
   // Get wallet
-  const { data: wallet } = await supabase
+  const { data: walletData2 } = await supabase
     .from('wallets')
     .select('id')
     .eq('user_id', user.id)
     .single()
+
+  const wallet = walletData2 as { id: string } | null
 
   if (!wallet) {
     return {
@@ -105,16 +107,21 @@ export async function getWalletStats() {
   }
 
   // Get transaction statistics
-  const { data: transactions } = await supabase
+  const { data: transactionsData2 } = await supabase
     .from('wallet_transactions')
     .select('transaction_type, amount')
     .eq('wallet_id', wallet.id)
 
-  const totalCredits = (transactions || [])
+  const transactions = (transactionsData2 || []) as Array<{
+    transaction_type: string
+    amount: string | number
+  }>
+
+  const totalCredits = transactions
     .filter((t) => t.transaction_type === 'credit')
     .reduce((sum, t) => sum + parseFloat(t.amount as string), 0)
 
-  const totalDebits = (transactions || [])
+  const totalDebits = transactions
     .filter((t) => t.transaction_type === 'debit')
     .reduce((sum, t) => sum + parseFloat(t.amount as string), 0)
 
