@@ -43,7 +43,13 @@ export async function getUserRoles(userId: string) {
     throw new Error(`Error al obtener roles: ${error.message}`)
   }
 
-  return (roles || []).map((role) => ({
+  const rolesList = (roles || []) as Array<{
+    [key: string]: any
+    events?: any
+    organizations?: any
+  }>
+
+  return rolesList.map((role) => ({
     ...role,
     event: Array.isArray(role.events) ? role.events[0] : role.events,
     organization: Array.isArray(role.organizations) ? role.organizations[0] : role.organizations,
@@ -88,7 +94,12 @@ export async function getEventAdmins(eventId: string) {
     throw new Error(`Error al obtener admins: ${error.message}`)
   }
 
-  return (roles || []).map((role) => ({
+  const rolesList = (roles || []) as Array<{
+    [key: string]: any
+    users?: any
+  }>
+
+  return rolesList.map((role) => ({
     ...role,
     user: Array.isArray(role.users) ? role.users[0] : role.users,
   }))
@@ -133,7 +144,12 @@ export async function getOrganizationUsers(organizationId: string) {
     throw new Error(`Error al obtener usuarios: ${error.message}`)
   }
 
-  return (users || []).map((user) => ({
+  const usersList = (users || []) as Array<{
+    [key: string]: any
+    user_roles?: any
+  }>
+
+  return usersList.map((user) => ({
     ...user,
     roles: Array.isArray(user.user_roles) ? user.user_roles : [],
   }))

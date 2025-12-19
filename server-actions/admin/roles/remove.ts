@@ -42,11 +42,13 @@ export async function removeRole(data: {
   const supabase = await createServiceRoleClient()
 
   // Get user for audit
-  const { data: user } = await supabase
+  const { data: userData } = await supabase
     .from('users')
     .select('id, email')
     .eq('id', validated.userId)
     .single()
+
+  const user = userData as { id: string; email: string } | null
 
   // Find and remove role
   let query = supabase
@@ -61,11 +63,13 @@ export async function removeRole(data: {
     query = query.is('event_id', null)
   }
 
-  const { data: userRole, error: findError } = await query.single()
+  const { data: userRoleData, error: findError } = await query.single()
 
-  if (findError || !userRole) {
+  if (findError || !userRoleData) {
     throw new NotFoundError('User role')
   }
+
+  const userRole = userRoleData as { id: string }
 
   // Remove role
   const { error: removeError } = await supabase
@@ -91,12 +95,12 @@ export async function removeRole(data: {
       resourceId: userRole.id,
       metadata: {
         targetUserId: validated.userId,
-        targetUserEmail: user?.email,
+        targetUserEmail: user?.email || null,
         role: validated.role,
         eventId: validated.eventId,
       },
     },
-    request
+    request as any
   )
 
   return { success: true }

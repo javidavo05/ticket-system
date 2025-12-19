@@ -74,7 +74,7 @@ export async function deleteEventExpense(expenseId: string) {
         amount: expense.amount,
       },
     },
-    request
+    request as any
   )
 
   return { success: true }

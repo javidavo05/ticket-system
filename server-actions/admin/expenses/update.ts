@@ -36,14 +36,22 @@ export async function updateEventExpense(expenseId: string, data: {
   const supabase = await createServiceRoleClient()
 
   // Get current expense
-  const { data: currentExpense, error: fetchError } = await supabase
+  const { data: currentExpenseData, error: fetchError } = await supabase
     .from('event_expenses')
     .select('id, event_id, created_by, amount, expense_date')
     .eq('id', expenseId)
     .single()
 
-  if (fetchError || !currentExpense) {
+  if (fetchError || !currentExpenseData) {
     throw new NotFoundError('Expense')
+  }
+
+  const currentExpense = currentExpenseData as {
+    id: string
+    event_id: string
+    created_by: string
+    amount: string | number
+    expense_date: string
   }
 
   // Validate permissions: creator or accounting or event admin
@@ -93,12 +101,12 @@ export async function updateEventExpense(expenseId: string, data: {
   if (validated.expenseDate !== undefined) updateData.expense_date = validated.expenseDate
 
   // Update expense
-  const { data: updatedExpense, error: updateError } = await supabase
+  const { data: updatedExpense, error: updateError } = await ((supabase as any)
     .from('event_expenses')
     .update(updateData)
     .eq('id', expenseId)
     .select()
-    .single()
+    .single())
 
   if (updateError || !updatedExpense) {
     throw new ValidationError(`Error al actualizar gasto: ${updateError?.message}`)
@@ -117,11 +125,16 @@ export async function updateEventExpense(expenseId: string, data: {
       resourceType: 'event_expense',
       resourceId: expenseId,
       changes: {
-        before: currentExpense,
-        after: updateData,
+        ...Object.keys(updateData).reduce((acc, key) => {
+          acc[key] = {
+            before: (currentExpense as any)[key],
+            after: updateData[key],
+          }
+          return acc
+        }, {} as Record<string, { before: unknown; after: unknown }>),
       },
     },
-    request
+    request as any
   )
 
   return updatedExpense

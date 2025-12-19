@@ -46,9 +46,15 @@ export async function getPlatformKPIs(dateRange?: { start: string; end: string }
       .lte('created_at', dateRange.end)
   }
 
-  const { data: payments } = await paymentsQuery
+  const { data: paymentsData } = await paymentsQuery
 
-  const totalRevenue = payments?.reduce((sum, p) => sum + parseFloat(p.amount as string), 0) || 0
+  const payments = (paymentsData || []) as Array<{
+    amount: string | number
+    status: string
+    created_at: string
+  }>
+
+  const totalRevenue = payments.reduce((sum, p) => sum + parseFloat(p.amount as string), 0)
 
   let eventsQuery = supabase
     .from('events')
@@ -73,9 +79,13 @@ export async function getPlatformKPIs(dateRange?: { start: string; end: string }
       .lte('created_at', dateRange.end)
   }
 
-  const { data: tickets } = await ticketsQuery
-  const totalTickets = tickets?.length || 0
-  const ticketsSold = tickets?.filter(t => t.status === 'paid').length || 0
+  const { data: ticketsData } = await ticketsQuery
+  const tickets = (ticketsData || []) as Array<{
+    id: string
+    status: string
+  }>
+  const totalTickets = tickets.length
+  const ticketsSold = tickets.filter(t => t.status === 'paid').length
 
   return {
     totalRevenue,

@@ -16,7 +16,7 @@ export async function processScanAction(
     headers: headersList,
   })
 
-  const result = await processScan(qrSignature, user.id, location, request)
+  const result = await processScan(qrSignature, user.id, location, request as any)
 
   return result
 }

@@ -28,7 +28,7 @@ export async function getEventExpenses(eventId: string) {
   }
 
   // Get expenses
-  const { data: expenses, error } = await supabase
+  const { data: expensesData, error } = await supabase
     .from('event_expenses')
     .select(`
       *,
@@ -45,13 +45,19 @@ export async function getEventExpenses(eventId: string) {
     throw new Error(`Error al obtener gastos: ${error.message}`)
   }
 
+  const expenses = (expensesData || []) as Array<{
+    amount: string | number
+    category: string
+    [key: string]: any
+  }>
+
   // Calculate totals
-  const total = (expenses || []).reduce((sum, exp) => {
+  const total = expenses.reduce((sum, exp) => {
     return sum + parseFloat(exp.amount as string)
   }, 0)
 
   // Group by category
-  const byCategory = (expenses || []).reduce((acc, exp) => {
+  const byCategory = expenses.reduce((acc, exp) => {
     const category = exp.category
     if (!acc[category]) {
       acc[category] = { count: 0, total: 0 }
@@ -62,14 +68,14 @@ export async function getEventExpenses(eventId: string) {
   }, {} as Record<string, { count: number; total: number }>)
 
   return {
-    expenses: (expenses || []).map((exp) => ({
+    expenses: expenses.map((exp) => ({
       ...exp,
       amount: parseFloat(exp.amount as string),
       createdBy: Array.isArray(exp.users) ? exp.users[0] : exp.users,
     })),
     statistics: {
       total,
-      count: expenses?.length || 0,
+      count: expenses.length,
       byCategory,
     },
   }

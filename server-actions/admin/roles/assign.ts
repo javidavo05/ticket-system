@@ -36,15 +36,17 @@ export async function assignRole(data: {
 
   // Validate user exists
   const supabase = await createServiceRoleClient()
-  const { data: user, error: userError } = await supabase
+  const { data: userData, error: userError } = await supabase
     .from('users')
     .select('id, email')
     .eq('id', validated.userId)
     .single()
 
-  if (userError || !user) {
+  if (userError || !userData) {
     throw new NotFoundError('User')
   }
+
+  const user = userData as { id: string; email: string }
 
   // Validate role doesn't already exist
   const uniquenessCheck = await validateRoleUniqueness(
@@ -63,7 +65,7 @@ export async function assignRole(data: {
   }
 
   // Assign role
-  const { data: userRole, error: assignError } = await supabase
+  const { data: userRole, error: assignError } = await ((supabase as any)
     .from('user_roles')
     .insert({
       user_id: validated.userId,
@@ -72,7 +74,7 @@ export async function assignRole(data: {
       organization_id: validated.organizationId || null,
     })
     .select()
-    .single()
+    .single())
 
   if (assignError || !userRole) {
     throw new ValidationError(`Error al asignar rol: ${assignError?.message}`)
@@ -98,7 +100,7 @@ export async function assignRole(data: {
         organizationId: validated.organizationId,
       },
     },
-    request
+    request as any
   )
 
   return userRole

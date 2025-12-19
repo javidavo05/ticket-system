@@ -17,14 +17,21 @@ export async function activateTheme(themeId: string) {
   const supabase = await createServiceRoleClient()
 
   // Get theme info
-  const { data: theme, error: getError } = await supabase
+  const { data: themeData, error: getError } = await supabase
     .from('themes')
     .select('id, name, is_active, version')
     .eq('id', themeId)
     .single()
 
-  if (getError || !theme) {
+  if (getError || !themeData) {
     throw new NotFoundError('Theme')
+  }
+
+  const theme = themeData as {
+    id: string
+    name: string
+    is_active: boolean
+    version: number
   }
 
   if (theme.is_active) {
