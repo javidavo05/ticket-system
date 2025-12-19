@@ -84,7 +84,7 @@ export async function registerUser(data: {
         method: 'email',
       },
     },
-    request
+    request as any
   )
 
   return {
