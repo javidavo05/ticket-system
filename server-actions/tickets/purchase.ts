@@ -79,12 +79,20 @@ export async function purchaseTickets(formData: FormData) {
   // Apply discount if provided
   let discountId: string | undefined
   if (validated.discountCode) {
-    const { data: discount } = await supabase
+    const { data: discountData } = await supabase
       .from('discounts')
       .select('*')
       .eq('code', validated.discountCode.toUpperCase())
       .eq('event_id', ticketType.event_id)
       .single()
+
+    const discount = discountData as {
+      valid_from: string
+      valid_until: string
+      uses_count: number
+      max_uses: number | null
+      [key: string]: any
+    } | null
 
     if (discount) {
       const now = new Date()
