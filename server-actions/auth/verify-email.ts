@@ -37,7 +37,7 @@ export async function verifyEmail(hash: string) {
         email: data.user.email,
       },
     },
-    request
+    request as any
   )
 
   return { success: true, user: data.user }
