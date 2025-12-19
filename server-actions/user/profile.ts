@@ -119,10 +119,10 @@ export async function updateProfile(data: {
   }
 
   // Update profile
-  const { error: updateError } = await supabase
+  const { error: updateError } = await ((supabase as any)
     .from('users')
     .update(updateData)
-    .eq('id', user.id)
+    .eq('id', user.id))
 
   if (updateError) {
     throw new ProfileUpdateError(`Error al actualizar perfil: ${updateError.message}`)
