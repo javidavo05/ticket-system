@@ -100,9 +100,48 @@ export function MobileScanner() {
   )
 
   const startScanning = async () => {
-    if (!scanAreaRef.current || !scannerId) return
+    if (!scanAreaRef.current || !scannerId) {
+      setCameraError('Elemento de escaneo no disponible o usuario no autenticado')
+      return
+    }
+
+    // Ensure element has ID
+    if (!scanAreaRef.current.id) {
+      scanAreaRef.current.id = 'qr-reader'
+    }
 
     try {
+      // Request camera permissions first
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' } 
+        })
+        // Stop the test stream immediately
+        stream.getTracks().forEach(track => track.stop())
+      } catch (permError: any) {
+        setCameraError('Permisos de cámara denegados. Por favor, permite el acceso a la cámara en la configuración del navegador.')
+        setScanning(false)
+        return
+      }
+
+      // Set scanning state to true first so element becomes visible
+      setScanning(true)
+      setCameraError(null)
+
+      // Small delay to ensure DOM updates and element is visible
+      await new Promise(resolve => setTimeout(resolve, 300))
+
+      // Verify element is still available and visible
+      if (!scanAreaRef.current) {
+        setCameraError('Elemento de escaneo no disponible')
+        setScanning(false)
+        return
+      }
+
+      // Ensure element is visible
+      scanAreaRef.current.style.display = 'block'
+      scanAreaRef.current.style.visibility = 'visible'
+
       const html5QrCode = new Html5Qrcode(scanAreaRef.current.id)
       scannerRef.current = html5QrCode
 
@@ -120,9 +159,6 @@ export function MobileScanner() {
           // Ignore scanning errors (they're frequent during scanning)
         }
       )
-
-      setScanning(true)
-      setCameraError(null)
     } catch (error: any) {
       setCameraError(error.message || 'Error al iniciar la cámara')
       setScanning(false)
@@ -182,7 +218,10 @@ export function MobileScanner() {
           id="qr-reader"
           ref={scanAreaRef}
           className="w-full h-full"
-          style={{ display: scanning ? 'block' : 'none' }}
+          style={{ 
+            display: scanning ? 'block' : 'none',
+            visibility: scanning ? 'visible' : 'hidden'
+          }}
         />
 
         {!scanning && (

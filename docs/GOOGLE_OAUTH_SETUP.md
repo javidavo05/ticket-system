@@ -20,9 +20,9 @@ Este error indica que Google OAuth no está habilitado en tu proyecto de Supabas
      - `http://localhost:3000` (para desarrollo)
      - `https://ticket-system-sigma-nine.vercel.app` (tu URL de producción)
    - **Authorized redirect URIs**:
-     - `https://[TU-PROJECT-REF].supabase.co/auth/v1/callback`
-     - Reemplaza `[TU-PROJECT-REF]` con el ID de tu proyecto de Supabase
-     - Ejemplo: `https://ijfexclrwxrnfbemdtox.supabase.co/auth/v1/callback`
+     - `https://ijfexclrwxrnfbemdtox.supabase.co/auth/v1/callback`
+     - ⚠️ **IMPORTANTE**: Esta es la URL exacta que debes usar (basada en tu Project URL de Supabase)
+     - Si tu Project URL es diferente, reemplaza `ijfexclrwxrnfbemdtox` con tu Project Reference
 7. Copia el **Client ID** y **Client Secret** que se generan
 
 ## Paso 2: Habilitar Google en Supabase
@@ -53,8 +53,9 @@ Después de guardar, deberías ver:
 
 ### Error: "redirect_uri_mismatch"
 - Verifica que la URL de redirect en Google Cloud Console coincida exactamente con:
-  `https://[TU-PROJECT-REF].supabase.co/auth/v1/callback`
+  `https://ijfexclrwxrnfbemdtox.supabase.co/auth/v1/callback`
 - Asegúrate de que no haya espacios o caracteres extra
+- La URI debe ser exactamente: `https://[TU-PROJECT-REF].supabase.co/auth/v1/callback` (reemplaza con tu Project Reference)
 
 ### Error: "Invalid client"
 - Verifica que el Client ID y Client Secret estén correctos en Supabase

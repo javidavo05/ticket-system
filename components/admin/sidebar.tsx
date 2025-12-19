@@ -90,7 +90,10 @@ export function AdminSidebar({ isSuperAdmin = false }: AdminSidebarProps) {
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      onClick={() => setIsMobileOpen(false)}
+                      onClick={(e) => {
+                        setIsMobileOpen(false)
+                        // Allow navigation to proceed normally
+                      }}
                       className={cn(
                         'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
                         isActive
@@ -114,7 +117,10 @@ export function AdminSidebar({ isSuperAdmin = false }: AdminSidebarProps) {
                   <li className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800">
                     <Link
                       href="/super"
-                      onClick={() => setIsMobileOpen(false)}
+                      onClick={(e) => {
+                        setIsMobileOpen(false)
+                        // Allow navigation to proceed normally
+                      }}
                       className={cn(
                         'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
                         pathname?.startsWith('/super')
@@ -132,10 +138,11 @@ export function AdminSidebar({ isSuperAdmin = false }: AdminSidebarProps) {
           </nav>
         </div>
 
-        {/* Mobile overlay */}
+        {/* Mobile overlay - positioned outside sidebar area */}
         {isMobileOpen && (
           <div
-            className="lg:hidden fixed inset-0 bg-black/50 z-30"
+            className="lg:hidden fixed top-0 right-0 bottom-0 bg-black/50 z-30"
+            style={{ left: '256px' }}
             onClick={() => setIsMobileOpen(false)}
           />
         )}

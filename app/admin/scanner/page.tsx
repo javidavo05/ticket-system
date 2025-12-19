@@ -71,9 +71,8 @@ function DesktopScanner() {
       const scanResult = await response.json()
       setResult(scanResult)
       
-      if (scanResult.success && scanning) {
-        stopScanning()
-      }
+      // Don't auto-stop scanner - let user manually stop if they want
+      // Scanner will continue scanning for more tickets
     } catch (error: any) {
       setResult({
         success: false,
@@ -127,12 +126,16 @@ function DesktopScanner() {
     setScanning(false)
   }
 
+  // Cleanup on unmount only
   useEffect(() => {
     return () => {
       if (scannerRef.current) {
         scannerRef.current.stop().catch(() => {})
+        scannerRef.current.clear()
+        scannerRef.current = null
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
