@@ -11,6 +11,8 @@ import { initializeTheme } from '@/lib/utils/dark-mode'
 
 const inter = Inter({ subsets: ['latin'] })
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Sistema de Tickets',
   description: 'Sistema de venta y validación de tickets',

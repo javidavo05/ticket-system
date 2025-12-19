@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { verifyEmail } from '@/server-actions/auth/verify-email'
 
-export default function VerifyEmailPage() {
+function VerifyEmailForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
@@ -14,19 +14,6 @@ export default function VerifyEmailPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [resending, setResending] = useState(false)
-
-  useEffect(() => {
-    const emailParam = searchParams.get('email')
-    if (emailParam) {
-      setEmail(decodeURIComponent(emailParam))
-    }
-
-    // Verificar si hay un token en la URL (callback de verificación)
-    const hash = window.location.hash
-    if (hash && hash.includes('type=email')) {
-      handleVerification(hash)
-    }
-  }, [searchParams])
 
   const handleVerification = async (hash: string) => {
     setLoading(true)
@@ -44,6 +31,20 @@ export default function VerifyEmailPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    const emailParam = searchParams.get('email')
+    if (emailParam) {
+      setEmail(decodeURIComponent(emailParam))
+    }
+
+    // Verificar si hay un token en la URL (callback de verificación)
+    const hash = window.location.hash
+    if (hash && hash.includes('type=email')) {
+      handleVerification(hash)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   const handleResend = async () => {
     if (!email) {
@@ -145,6 +146,21 @@ export default function VerifyEmailPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    }>
+      <VerifyEmailForm />
+    </Suspense>
   )
 }
 
