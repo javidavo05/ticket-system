@@ -71,26 +71,26 @@ export default async function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
               <Link href="/admin/events/new">
-                <div className="flex flex-col items-center gap-2">
+                <span className="flex flex-col items-center gap-2">
                   <Plus className="h-5 w-5" />
                   <span>Crear Evento</span>
-                </div>
+                </span>
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
               <Link href="/admin/events">
-                <div className="flex flex-col items-center gap-2">
+                <span className="flex flex-col items-center gap-2">
                   <Calendar className="h-5 w-5" />
                   <span>Gestionar Eventos</span>
-                </div>
+                </span>
               </Link>
             </Button>
             <Button asChild variant="outline" className="h-auto py-4 flex-col gap-2">
               <Link href="/admin/scanner">
-                <div className="flex flex-col items-center gap-2">
+                <span className="flex flex-col items-center gap-2">
                   <QrCode className="h-5 w-5" />
                   <span>Escáner de Tickets</span>
-                </div>
+                </span>
               </Link>
             </Button>
           </div>
